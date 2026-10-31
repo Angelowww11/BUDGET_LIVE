@@ -17,6 +17,8 @@ This is an installable web app with its own home-screen icon and standalone wind
 ## Features
 
 - Allowance-based budgets: choose **Edit plan → Until next allowance / income**, set the budget start and next payment date, and optionally repeat monthly. Daily limits use those dates instead of month end. The next payment date begins the new period; repeating renews the budget without adding an account transaction.
+- Salary paydays: choose **Twice monthly (salary dates)** in the spending plan, then set two paydays such as the 15th and 30th with an expected amount for each. The spending period runs from one payday to the next. **Plan → Paydays** shows both dates, the next payday, and a **Log salary** shortcut that opens a pre-filled income entry.
+- Monthly bills and subscriptions: **Plan → Monthly bills** keeps a dedicated list of recurring monthly expenses with amount, due day, category, and account. It shows the monthly total, next bill, and offers **Mark paid** to log an expense when it actually happens.
 - Balance-first overview with remaining budget, today’s spending and categories, overall account balance, and a visible division such as PHP 8,000 / 31 days = PHP 258.06 per day. New plans use a fixed daily allowance by default; existing rollover preferences are preserved.
 - A responsive overview, actual seven-day spending chart, period budget ring, and cash-flow summary.
 - Expense and income entry with a visual category grid, notes, dates, payment method, and tags.
@@ -47,7 +49,7 @@ There is no backend, analytics, bank linking, account, or transaction upload. Fo
 
 ## Budget assumptions
 
-The spending plan is the amount available to spend, separate from the overall account ledger and recorded income. The overview displays both budget balance and overall account balance with their labels. A first-time plan can also initialize Cash to the same amount without logging income. Logging income does not automatically increase it. Category limits are monthly guides within this plan, not additional money. Savings-goal contributions update the goal tracker without logging an expense. To move actual funds, use Accounts → Move money. Transfers retain the overall account total and do not change the spending plan. Accounts marked as set aside are excluded from the everyday-money subtotal. Recurring items are logged only after confirmation; no background scheduler or notification delivery is implied.
+The spending plan is the amount available to spend, separate from the overall account ledger and recorded income. The overview displays both budget balance and overall account balance with their labels. A first-time plan can also initialize Cash to the same amount without logging income. Logging income does not automatically increase it. Salary payday amounts are expectations used for display and pre-filling an income entry; they do not change the spending amount automatically. Monthly bills are also recorded only after **Mark paid** is confirmed. Category limits are monthly guides within this plan, not additional money. Savings-goal contributions update the goal tracker without logging an expense. To move actual funds, use Accounts → Move money. Transfers retain the overall account total and do not change the spending plan. Accounts marked as set aside are excluded from the everyday-money subtotal. Recurring items are logged only after confirmation; no background scheduler or notification delivery is implied.
 
 ## Development
 

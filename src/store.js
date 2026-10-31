@@ -1,8 +1,45 @@
 import { initialAccounts, accountTypes } from "./accounts.js";
 import { colorMode } from "./appearance.js";
+import { validateSalary } from "./budget.js";
 export const STORAGE_KEY = "daylight-budget-v1";
 export const RECOVERY_KEY = `${STORAGE_KEY}-recovery`;
 let lastRead = null;
+
+const defaultSalary = () => ({
+  enabled: false,
+  day1: 15,
+  day2: 30,
+  amount1: 0,
+  amount2: 0,
+});
+
+function normalizeSalary(value) {
+  if (value === undefined) return defaultSalary();
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("The salary payday section is invalid.");
+  const salary = {
+    enabled: Boolean(value.enabled),
+    day1: value.day1 === undefined ? 15 : Number(value.day1),
+    day2: value.day2 === undefined ? 30 : Number(value.day2),
+    amount1: value.amount1 === undefined ? 0 : Number(value.amount1),
+    amount2: value.amount2 === undefined ? 0 : Number(value.amount2),
+  };
+  if (salary.enabled) validateSalary(salary);
+  else if (
+    !Number.isInteger(salary.day1) ||
+    salary.day1 < 1 ||
+    salary.day1 > 31 ||
+    !Number.isInteger(salary.day2) ||
+    salary.day2 < 1 ||
+    salary.day2 > 31 ||
+    salary.day1 === salary.day2 ||
+    ![salary.amount1, salary.amount2].every(
+      (amount) => Number.isFinite(amount) && amount >= 0,
+    )
+  )
+    throw new Error("The salary payday section is invalid.");
+  return salary;
+}
 
 export function emptyState() {
   return {
@@ -14,6 +51,7 @@ export function emptyState() {
       rollover: false,
       theme: "green",
       colorMode: "light",
+      salary: defaultSalary(),
     },
     transactions: [],
     categories: [],
@@ -49,6 +87,11 @@ export function normalize(value) {
     settings: { ...base.settings, ...value.settings },
   };
   next.settings.colorMode = colorMode(value.settings);
+  next.settings.salary = normalizeSalary(value.settings.salary);
+  if (next.settings.cycle === "salary" && !next.settings.salary.enabled)
+    throw new Error(
+      "The spending plan needs two enabled salary paydays. Set them up first.",
+    );
   for (const key of [
     "transactions",
     "categories",

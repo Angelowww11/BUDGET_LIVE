@@ -46,6 +46,19 @@ export function advanceDueDate(date, frequency, anchorDay) {
   }
   return dayKey(d);
 }
+export function nextDueDateForDay(day, from = new Date()) {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
+  const scheduled = (year, month) =>
+    new Date(
+      year,
+      month,
+      Math.min(Number(day), new Date(year, month + 1, 0).getDate()),
+    );
+  let date = scheduled(d.getFullYear(), d.getMonth());
+  if (date < d) date = scheduled(d.getFullYear(), d.getMonth() + 1);
+  return dayKey(date);
+}
 export function activityStreak(items, today = new Date()) {
   const days = new Set(items.map((t) => dayKey(t.date)));
   const cursor = new Date(today);

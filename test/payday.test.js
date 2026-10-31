@@ -5,6 +5,8 @@ import {
   periodBounds,
   validatePayday,
   dayKey,
+  salaryBounds,
+  nextSalaryDate,
 } from "../src/budget.js";
 import { emptyState, backup, restore } from "../src/store.js";
 const settings = {
@@ -104,4 +106,86 @@ test("private backup retains allowance dates and original records", () => {
   assert.equal(copy.settings.nextPayday, settings.nextPayday);
   assert.equal(copy.settings.repeatPayday, true);
   assert.equal(copy.transactions[0].id, "keep");
+});
+
+const salarySettings = {
+  budget: 16000,
+  cycle: "salary",
+  rollover: false,
+  salary: {
+    enabled: true,
+    day1: 15,
+    day2: 30,
+    amount1: 8000,
+    amount2: 8000,
+  },
+};
+test("salary periods run from one payday to the next", () => {
+  const p = periodBounds(new Date(2027, 0, 5, 12), "salary", salarySettings);
+  assert.equal(dayKey(p.start), "2026-12-30");
+  assert.equal(dayKey(p.end), "2027-01-15");
+  assert.equal(p.days, 16);
+  const onPayday = periodBounds(
+    new Date(2027, 0, 15, 12),
+    "salary",
+    salarySettings,
+  );
+  assert.equal(dayKey(onPayday.start), "2027-01-15");
+  assert.equal(dayKey(onPayday.end), "2027-01-30");
+  assert.equal(onPayday.remainingDays, 15);
+});
+test("salary paydays clamp to the end of February and return in March", () => {
+  const p = periodBounds(new Date(2027, 1, 20, 12), "salary", salarySettings);
+  assert.equal(dayKey(p.start), "2027-02-15");
+  assert.equal(dayKey(p.end), "2027-02-28");
+  const after = periodBounds(
+    new Date(2027, 1, 28, 12),
+    "salary",
+    salarySettings,
+  );
+  assert.equal(dayKey(after.start), "2027-02-28");
+  assert.equal(dayKey(after.end), "2027-03-15");
+  assert.equal(dayKey(nextSalaryDate(30, new Date(2027, 1, 20))), "2027-02-28");
+  assert.equal(dayKey(nextSalaryDate(15, new Date(2027, 1, 20))), "2027-03-15");
+});
+test("salary summary divides the plan across the short pay period", () => {
+  const s = budgetSummary(salarySettings, [], new Date(2027, 1, 20, 12));
+  assert.equal(dayKey(s.start), "2027-02-15");
+  assert.equal(dayKey(s.end), "2027-02-28");
+  assert.equal(s.days, 13);
+  assert.equal(s.remainingDays, 8);
+});
+test("salary payday validation requires two different valid days", () => {
+  assert.doesNotThrow(() => validatePayday(salarySettings));
+  assert.throws(
+    () =>
+      validatePayday({
+        ...salarySettings,
+        salary: { ...salarySettings.salary, enabled: false },
+      }),
+    /salary payday/i,
+  );
+  assert.throws(
+    () =>
+      validatePayday({
+        ...salarySettings,
+        salary: { ...salarySettings.salary, day2: 15 },
+      }),
+    /different/i,
+  );
+  assert.throws(
+    () =>
+      validatePayday({
+        ...salarySettings,
+        salary: { ...salarySettings.salary, day1: 32 },
+      }),
+    /1 through 31/i,
+  );
+  assert.equal(salaryBounds({ ...salarySettings, salary: { ...salarySettings.salary, enabled: false } }), null);
+});
+test("salary schedule survives a private backup", () => {
+  const data = emptyState();
+  Object.assign(data.settings, salarySettings);
+  const copy = restore(backup(data));
+  assert.deepEqual(copy.settings.salary, salarySettings.salary);
 });

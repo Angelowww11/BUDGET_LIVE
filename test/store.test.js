@@ -52,6 +52,8 @@ test("legacy records retain identity and all fields with additive defaults", () 
   assert.deepEqual(upgraded.transactions, value.transactions);
   assert.equal(upgraded.settings.theme, "pink");
   assert.deepEqual(upgraded.bills, []);
+  assert.equal(upgraded.settings.salary.enabled, false);
+  assert.equal(upgraded.settings.salary.day1, 15);
   assert.deepEqual(restore(backup(upgraded)), upgraded);
 });
 test("saving keeps the previous copy and detects another window", () => {

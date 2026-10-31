@@ -5202,3 +5202,78 @@ select {
   flex-shrink: 0;
   font-size: 0.7rem;
 }
+
+/* Salary paydays and monthly bills */
+:root .salary-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+.salary-fields[hidden],
+.salary-fields .form-row[hidden] {
+  display: none;
+}
+.salary-fields legend {
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.salary-fields .checkbox {
+  margin-bottom: 14px;
+}
+.salary-fields p {
+  margin-bottom: 0;
+}
+.salary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.salary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px;
+}
+.salary-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.salary-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: var(--tint);
+  color: var(--accent);
+  font-family: "Manrope Variable", sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+.salary-amount {
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+.salary-card p {
+  margin: 0;
+}
+.salary-summary .salary-next {
+  font-size: 0.8rem;
+}
+.monthly-bills-banner .banner-art {
+  background: var(--tint);
+}
+@media (max-width: 720px) {
+  .salary-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6,6 +6,13 @@ export function demoState() {
   const now = new Date();
   d.settings.budget = 25000;
   d.settings.cycle = "monthly";
+  d.settings.salary = {
+    enabled: true,
+    day1: 15,
+    day2: 30,
+    amount1: 16000,
+    amount2: 16000,
+  };
   const dateAt = (day, hour = 12) => {
     const x = new Date(
       now.getFullYear(),
@@ -95,6 +102,8 @@ export function demoState() {
   ];
   const due = new Date(now);
   due.setDate(due.getDate() + 4);
+  const musicDue = new Date(now);
+  musicDue.setDate(musicDue.getDate() + 12);
   d.bills = [
     {
       id: "demo-bill",
@@ -105,6 +114,17 @@ export function demoState() {
       dueDate: dayKey(due),
       frequency: "monthly",
       anchorDay: due.getDate(),
+      paymentMethod: "card",
+    },
+    {
+      id: "demo-music",
+      name: "Music streaming",
+      type: "expense",
+      category: "Subscriptions",
+      amount: 219,
+      dueDate: dayKey(musicDue),
+      frequency: "monthly",
+      anchorDay: musicDue.getDate(),
       paymentMethod: "card",
     },
   ];

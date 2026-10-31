@@ -10,7 +10,85 @@ export function budgetDate(value) {
 }
 const ordinal = (d) =>
   Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
+const daysInMonth = (year, month) =>
+  new Date(year, month + 1, 0).getDate();
+const salaryDate = (year, month, day) =>
+  new Date(
+    year,
+    month,
+    Math.min(Number(day), daysInMonth(year, month)),
+  );
+const validSalaryDay = (day) =>
+  Number.isInteger(Number(day)) &&
+  Number(day) >= 1 &&
+  Number(day) <= 31;
+export function salarySlots(settings = {}) {
+  const salary = settings.salary;
+  if (!salary?.enabled) return [];
+  return [
+    {
+      key: 1,
+      day: Number(salary.day1),
+      amount: Number(salary.amount1) || 0,
+    },
+    {
+      key: 2,
+      day: Number(salary.day2),
+      amount: Number(salary.amount2) || 0,
+    },
+  ]
+    .filter((slot) => validSalaryDay(slot.day))
+    .sort((a, b) => a.day - b.day);
+}
+export function validateSalary(salary) {
+  if (!salary) throw new Error("Add your two salary payday dates.");
+  if (!validSalaryDay(salary.day1) || !validSalaryDay(salary.day2))
+    throw new Error("Salary payday dates must be days 1 through 31.");
+  if (Number(salary.day1) === Number(salary.day2))
+    throw new Error("Choose two different salary payday dates.");
+  for (const amount of [salary.amount1, salary.amount2])
+    if (
+      amount !== undefined &&
+      (!Number.isFinite(Number(amount)) || Number(amount) < 0)
+    )
+      throw new Error("Salary amounts must be zero or more.");
+}
+export function nextSalaryDate(day, from = new Date()) {
+  const start = new Date(from);
+  start.setHours(0, 0, 0, 0);
+  const valid = validSalaryDay(day) ? Number(day) : 1;
+  let date = salaryDate(start.getFullYear(), start.getMonth(), valid);
+  if (date < start)
+    date = salaryDate(start.getFullYear(), start.getMonth() + 1, valid);
+  return date;
+}
+export function salaryBounds(settings, today = new Date()) {
+  const slots = salarySlots(settings);
+  if (slots.length < 2) return null;
+  const d = new Date(today);
+  d.setHours(0, 0, 0, 0);
+  const candidates = [];
+  for (const offset of [-1, 0, 1]) {
+    const month = new Date(d.getFullYear(), d.getMonth() + offset, 1);
+    for (const slot of slots) {
+      const date = salaryDate(month.getFullYear(), month.getMonth(), slot.day);
+      if (!candidates.some((item) => dayKey(item.date) === dayKey(date)))
+        candidates.push({ ...slot, date });
+    }
+  }
+  candidates.sort((a, b) => a.date - b.date);
+  const previous = [...candidates].reverse().find((item) => item.date <= d);
+  const next = candidates.find((item) => item.date > d);
+  if (!previous || !next) return null;
+  return { start: previous.date, end: next.date, previous, next };
+}
 export function validatePayday(settings) {
+  if (settings.cycle === "salary") {
+    if (!settings.salary?.enabled)
+      throw new Error("Set up your two salary payday dates first.");
+    validateSalary(settings.salary);
+    return;
+  }
   if (settings.cycle !== "payday") return;
   const start = budgetDate(settings.budgetStart),
     end = budgetDate(settings.nextPayday);
@@ -23,7 +101,11 @@ export function periodBounds(today, cycle = "monthly", settings = {}) {
   const d = new Date(today);
   d.setHours(0, 0, 0, 0);
   let start, end;
-  if (
+  const salaryPeriod = cycle === "salary" ? salaryBounds(settings, d) : null;
+  if (salaryPeriod) {
+    start = salaryPeriod.start;
+    end = salaryPeriod.end;
+  } else if (
     cycle === "payday" &&
     budgetDate(settings.budgetStart) &&
     budgetDate(settings.nextPayday) > budgetDate(settings.budgetStart)

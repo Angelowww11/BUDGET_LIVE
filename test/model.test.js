@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   advanceDueDate,
+  nextDueDateForDay,
   parseAmount,
   filterTransactions,
   activityStreak,
@@ -67,4 +68,12 @@ test("tracking streak includes yesterday when today is not logged yet", () => {
     ),
     2,
   );
+});
+
+test("monthly due days clamp to the end of short months", () => {
+  assert.equal(nextDueDateForDay(31, new Date(2026, 0, 10, 12)), "2026-01-31");
+  assert.equal(nextDueDateForDay(31, new Date(2026, 1, 10, 12)), "2026-02-28");
+  assert.equal(nextDueDateForDay(31, new Date(2028, 1, 10, 12)), "2028-02-29");
+  assert.equal(nextDueDateForDay(15, new Date(2026, 1, 20, 12)), "2026-03-15");
+  assert.equal(nextDueDateForDay(15, new Date(2026, 1, 15, 12)), "2026-02-15");
 });

@@ -1,5 +1,11 @@
-import { paydayFields } from "./payday-ui.js";
-import { budgetSummary, dayKey } from "./budget.js";
+import { paydayFields, salaryFields } from "./payday-ui.js";
+import {
+  budgetSummary,
+  dayKey,
+  nextSalaryDate,
+  salaryBounds,
+  salarySlots,
+} from "./budget.js";
 import { categoryNames, categoryMeta, categoryBadge } from "./categories.js";
 import { icon } from "./icons.js";
 import { colorMode, themeSwatch } from "./appearance.js";
@@ -30,6 +36,7 @@ import {
   percent,
   progress,
   frequencyLabels,
+  dayOrdinal,
 } from "./ui.js";
 
 const title = (eyebrow, heading, detail, action = "") =>
@@ -116,14 +123,20 @@ export function homeView(ctx) {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   const pairs = categoryTotals(todayEntries),
     setup = s.total === 0;
+  const salary = salaryBounds(data.settings),
+    salaryDays = salarySlots(data.settings)
+      .map((slot) => dayOrdinal(slot.day))
+      .join(" & ");
   const cycleName =
-    data.settings.cycle === "payday"
-      ? "allowance period"
-      : data.settings.cycle === "monthly"
-        ? "month"
-        : data.settings.cycle === "weekly"
-          ? "week"
-          : "2 weeks";
+    data.settings.cycle === "salary"
+      ? "salary period"
+      : data.settings.cycle === "payday"
+        ? "allowance period"
+        : data.settings.cycle === "monthly"
+          ? "month"
+          : data.settings.cycle === "weekly"
+            ? "week"
+            : "2 weeks";
   const adjusted = Math.abs(s.safePerDay - s.baseDaily) > 0.005;
   const upcoming = [...data.bills]
     .filter((b) => !b.completed)
@@ -133,7 +146,7 @@ export function homeView(ctx) {
   <div class="dashboard-grid"><div class="dashboard-main">
   <section class="daily-card balance-first"><div class="daily-heading"><span class="eyebrow">BUDGET BALANCE REMAINING</span>${button("Edit plan", "budget-dialog", "pencil-simple", "text-button")}</div><div class="daily-amount">${money(s.remaining, c)}</div><div class="budget-subline"><span>${money(s.spent, c)} spent of ${money(s.total, c)} this ${cycleName}</span><span>${s.remainingDays} ${s.remainingDays === 1 ? "day" : "days"} left</span></div>
   ${setup ? `<div class="setup-actions">${button("Set my budget", "budget-dialog", "arrow-right", "button primary")}${button("Explore a sample", "start-demo", "", "button plain")}</div>` : `<div class="budget-equation" aria-label="${s.total} divided by ${s.days} days equals ${money(s.baseDaily, c)} per day"><span>${money(s.total, c)}</span><i>÷</i><span>${s.days} days</span><i>=</i><strong>${money(s.baseDaily, c)}<small>/ day</small></strong></div>`}
-  ${data.settings.cycle === "payday" ? `<div class="payday-summary">${icon("calendar-dots")}<span><strong>${s.active ? "Next allowance" : new Date() < s.start ? "Budget starts" : "Allowance date reached"}<br>${(new Date() < s.start ? s.start : s.end).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}</strong><small>${s.active ? `${s.remainingDays} spending days left, including today` : "Edit your plan to set the money and dates for your next allowance."}</small></span>${button("Change dates", "budget-dialog", "", "text-button")}</div>` : ""}<div class="today-budget-grid"><div><span>${adjusted ? "Adjusted limit today" : "Daily budget"}</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Spent today</span><strong class="${s.todaySpent > s.safePerDay ? "expense" : ""}">${money(s.todaySpent, c)}</strong></div><div class="today-left"><span>Left to spend today</span><strong>${money(s.leftToday, c)}</strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s budget used", s.percent >= 0.8)}
+  ${data.settings.cycle === "salary" && salary ? `<div class="payday-summary salary-summary">${icon("briefcase")}<span><strong>Next salary<br>${salary.end.toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}</strong><small>${salary.next.amount ? money(salary.next.amount, c) : "Amount not set"} · ${salaryDays} each month</small></span>${button("Change paydays", "edit-salary", "", "text-button")}</div>` : data.settings.cycle === "payday" ? `<div class="payday-summary">${icon("calendar-dots")}<span><strong>${s.active ? "Next allowance" : new Date() < s.start ? "Budget starts" : "Allowance date reached"}<br>${(new Date() < s.start ? s.start : s.end).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}</strong><small>${s.active ? `${s.remainingDays} spending days left, including today` : "Edit your plan to set the money and dates for your next allowance."}</small></span>${button("Change dates", "budget-dialog", "", "text-button")}</div>` : ""}<div class="today-budget-grid"><div><span>${adjusted ? "Adjusted limit today" : "Daily budget"}</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Spent today</span><strong class="${s.todaySpent > s.safePerDay ? "expense" : ""}">${money(s.todaySpent, c)}</strong></div><div class="today-left"><span>Left to spend today</span><strong>${money(s.leftToday, c)}</strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s budget used", s.percent >= 0.8)}
   ${!setup ? `<p class="allowance-note">${icon(data.settings.rollover ? "arrows-clockwise" : "calendar-blank")}${data.settings.rollover ? `Flexible rollover is on. Unspent money is shared across the ${s.remainingDays} remaining days.` : `Fixed daily limit: ${money(s.baseDaily, c)}. Your allowance never exceeds the budget remaining.`}${button(data.settings.rollover ? "Use fixed limit" : "Change", data.settings.rollover ? "fixed-daily-limit" : "budget-dialog", "", "text-button")}</p>` : ""}
   <button class="overview-account-link" data-action="view-accounts">${icon("wallet")}<span>Overall account balance <strong>${money(accounts.total, c)}</strong></span>${icon("caret-right")}</button></section>
   <section class="panel today-spending-panel">${panelHead("Where today’s money went", `${todayEntries.length} ${todayEntries.length === 1 ? "expense" : "expenses"} · ${money(s.todaySpent, c)} spent`, button("Day view", "today-activity", "arrow-right", "text-button"))}${
@@ -205,7 +218,7 @@ export function activityView(ctx) {
   ${ctx.showFilters ? `<div class="filter-grid"><label>Category<select id="filter-category"><option value="">All categories</option>${cats.map((cat) => `<option ${cat === filters.category ? "selected" : ""}>${esc(cat)}</option>`).join("")}</select></label><label>Account<select id="filter-accountId"><option value="">All accounts</option>${data.accounts.map((a) => `<option value="${esc(a.id)}" ${filters.accountId === a.id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select></label><label>From (within this view)<input type="date" id="filter-from" value="${esc(filters.from)}"></label><label>To<input type="date" id="filter-to" value="${esc(filters.to)}"></label>${button("Clear filters", "clear-filters", "", "text-button")}</div>` : ""}<div class="list-summary"><span id="results-count">${selected.length} ${selected.length === 1 ? "entry" : "entries"}</span>${button("Export CSV", "export-csv", "export", "text-button")}</div><div id="transaction-results">${selected.length ? transactionList(data, selected) : empty("No entries for this view", "Choose another day or week, or log something here.", "calendar-blank", "add-entry", "Add a transaction")}</div></section>`;
 }
 
-function billRow(data, b, compact = false) {
+function billRow(data, b, compact = false, editAction = "edit-bill") {
   const due = daysBetween(new Date(), localDate(b.dueDate));
   const dueText =
     due < 0
@@ -218,7 +231,7 @@ function billRow(data, b, compact = false) {
               month: "short",
               day: "numeric",
             });
-  return `<div class="bill-row">${categoryBadge(data, b.category, b.type)}<div><strong>${esc(b.name)}</strong><span class="${due < 0 ? "expense" : ""}">${dueText}${compact ? "" : ` · ${frequencyLabels[b.frequency] || "Monthly"}`}</span></div><strong class="bill-amount">${money(b.amount, data.settings.currency)}</strong>${compact ? "" : `<div class="bill-actions">${button(b.type === "income" ? "Received" : "Mark paid", "pay-bill", "check", "button small soft", `data-id="${esc(b.id)}"`)}${iconButton("Edit recurring entry", "edit-bill", "pencil-simple", `data-id="${esc(b.id)}"`)}</div>`}</div>`;
+  return `<div class="bill-row">${categoryBadge(data, b.category, b.type)}<div><strong>${esc(b.name)}</strong><span class="${due < 0 ? "expense" : ""}">${dueText}${compact ? "" : ` · ${frequencyLabels[b.frequency] || "Monthly"}`}</span></div><strong class="bill-amount">${money(b.amount, data.settings.currency)}</strong>${compact ? "" : `<div class="bill-actions">${button(b.type === "income" ? "Received" : "Mark paid", "pay-bill", "check", "button small soft", `data-id="${esc(b.id)}"`)}${iconButton("Edit recurring entry", editAction, "pencil-simple", `data-id="${esc(b.id)}"`)}</div>`}</div>`;
 }
 
 function goalCard(data, g, compact = false) {
@@ -247,22 +260,54 @@ export function planView(ctx) {
       ? button("New goal", "add-goal", "plus")
       : planTab === "bills"
         ? button("New recurring entry", "add-bill", "plus")
-        : button("Set a category limit", "add-limit", "plus");
+        : planTab === "monthly"
+          ? button("New monthly bill", "add-monthly-bill", "plus")
+          : planTab === "salary"
+            ? button("Edit paydays", "edit-salary", "pencil-simple", "button soft")
+            : button("Set a category limit", "add-limit", "plus");
   let content;
   if (planTab === "goals") {
     const saved = data.goals.reduce((n, g) => n + Number(g.saved), 0);
     content = `<div class="plan-banner"><span class="banner-art">${icon("piggy-bank")}</span><div><span class="eyebrow">SMALL STEPS, BIGGER POSSIBILITIES</span><h2>${money(saved, c)} saved toward your goals</h2><p>Savings are tracked separately from your spending budget.</p></div></div><div class="goal-grid">${data.goals.map((g) => goalCard(data, g)).join("")}</div>${data.goals.length ? "" : `<section class="panel">${empty("Give your savings a purpose", "An emergency fund, a trip, or something just for you.", "piggy-bank", "add-goal", "Create a goal")}</section>`}`;
+  } else if (planTab === "salary") {
+    const salary = data.settings.salary || {},
+      slots = salarySlots(data.settings),
+      totalSalary = slots.reduce((sum, slot) => sum + slot.amount, 0),
+      bounds = salaryBounds(data.settings),
+      salaryDays = slots.map((slot) => dayOrdinal(slot.day)).join(" & ");
+    if (!salary.enabled)
+      content = `<div class="plan-banner"><span class="banner-art">${icon("briefcase")}</span><div><span class="eyebrow">SALARY PAYDAYS</span><h2>Two paydays, one clear plan.</h2><p>Add the two dates your salary usually arrives and the amount for each.</p></div>${button("Set paydays", "edit-salary", "plus", "button soft")}</div><section class="panel">${empty("Let your paydays do the planning", "Add dates such as the 15th and 30th. You can also make your spending plan reset on each payday.", "briefcase", "edit-salary", "Set salary paydays")}</section>`;
+    else
+      content = `<div class="plan-banner salary-banner"><span class="banner-art">${icon("briefcase")}</span><div><span class="eyebrow">SALARY PAYDAYS</span><h2>${totalSalary ? money(totalSalary, c) : "Two paydays"} <small>/ month</small></h2><p>${salaryDays}${bounds ? ` · Next ${bounds.end.toLocaleDateString("en", { month: "short", day: "numeric" })}` : ""}${data.settings.cycle === "salary" ? " · Your spending plan follows these dates" : ""}</p></div>${button("Edit paydays", "edit-salary", "pencil-simple", "button soft")}</div><div class="salary-grid">${slots
+        .map((slot) => {
+          const next = nextSalaryDate(slot.day),
+            days = daysBetween(new Date(), next);
+          return `<section class="panel salary-card"><div class="salary-card-top"><span class="salary-day">${dayOrdinal(slot.day)}</span>${button(slot.amount ? "Log salary" : "Set amount", "log-salary", slot.amount ? "check" : "pencil-simple", "button small soft", `data-day="${slot.day}"`)}</div><strong class="salary-amount">${slot.amount ? money(slot.amount, c) : "Amount not set"}</strong><p class="small muted">Next payday: ${next.toLocaleDateString("en", { weekday: "short", month: "short", day: "numeric" })}${days === 0 ? " · today" : days === 1 ? " · tomorrow" : ` · in ${days} days`}</p></section>`;
+        })
+        .join("")}</div><div class="info-banner">${icon("wallet")}<p>${data.settings.cycle === "salary" ? "Each spending period runs from one payday to the next. Logging a salary adds a normal income entry; it doesn’t change your spending amount automatically." : "Your spending plan is not using these dates yet."}${data.settings.cycle !== "salary" ? ` ${button("Use for my spending plan", "use-salary-plan", "", "text-button")}` : ""}</p></div>`;
+  } else if (planTab === "monthly") {
+    const bills = data.bills
+      .filter(
+        (b) =>
+          !b.completed &&
+          (b.type || "expense") === "expense" &&
+          b.frequency === "monthly",
+      )
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    const monthlyTotal = bills.reduce((sum, b) => sum + Number(b.amount), 0),
+      next = bills[0];
+    content = `<div class="plan-banner monthly-bills-banner"><span class="banner-art">${icon("repeat")}</span><div><span class="eyebrow">RECURRING MONTHLY BILLS</span><h2>${money(monthlyTotal, c)} <small>/ month</small></h2><p>${bills.length} ${bills.length === 1 ? "bill or subscription" : "bills and subscriptions"}${next ? ` · Next: ${esc(next.name)} on ${localDate(next.dueDate).toLocaleDateString("en", { month: "short", day: "numeric" })}` : ""}</p></div>${button("Add monthly bill", "add-monthly-bill", "plus", "button soft")}</div><section class="panel">${panelHead("Subscriptions & monthly bills", "The recurring expenses that show up every month.")}${bills.length ? bills.map((b) => billRow(data, b, false, "edit-monthly-bill")).join("") : empty("No monthly bills yet", "Add streaming, internet, rent, or any subscription that repeats each month.", "repeat", "add-monthly-bill", "Add a monthly bill")}</section>`;
   } else if (planTab === "bills") {
     const bills = data.bills
       .filter((b) => !b.completed)
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-    content = `<div class="info-banner">${icon("calendar-dots")}<p>Plan ahead, then tap <strong>Mark paid</strong> to log an expense. Recurring dates move forward only when you confirm a payment.</p></div><section class="panel">${panelHead("Bills & recurring entries", "Expected payments and income, in date order.")}${bills.length ? bills.map((b) => billRow(data, b)).join("") : empty("Nothing on the horizon yet", "Add rent, subscriptions, or your next payday.", "calendar-dots", "add-bill", "Add a recurring entry")}</section>`;
+    content = `<div class="info-banner">${icon("calendar-dots")}<p>Plan ahead, then tap <strong>Mark paid</strong> to log an expense. Recurring dates move forward only when you confirm a payment. Monthly bills and subscriptions can also be managed in their own section.</p></div><section class="panel">${panelHead("All recurring entries", "Expected payments and income, in date order.")}${bills.length ? bills.map((b) => billRow(data, b)).join("") : empty("Nothing on the horizon yet", "Add rent, subscriptions, or your next payday.", "calendar-dots", "add-bill", "Add a recurring entry")}</section>`;
   } else {
     const by = Object.fromEntries(categoryTotals(m.tx));
     const limits = Object.entries(data.categoryBudgets).filter(
       ([, amount]) => amount > 0,
     );
-    content = `<div class="plan-banner"><span class="banner-art">${icon("wallet")}</span><div><span class="eyebrow">YOUR SPENDING PLAN</span><h2>${money(data.settings.budget, c)} <small>/ ${data.settings.cycle === "payday" ? "allowance period" : data.settings.cycle === "biweekly" ? "2 weeks" : data.settings.cycle === "weekly" ? "week" : "month"}</small></h2><p>The amount you choose to spend, separate from logged income.</p></div>${button("Edit plan", "budget-dialog", "pencil-simple", "button soft")}</div><div class="section-title"><div><h2>Monthly category limits</h2><p>Keep a little structure around the things that add up.</p></div><span class="soft-badge">${monthDate(month).toLocaleDateString("en", { month: "long" })}</span></div><div class="limit-grid">${limits
+    content = `<div class="plan-banner"><span class="banner-art">${icon("wallet")}</span><div><span class="eyebrow">YOUR SPENDING PLAN</span><h2>${money(data.settings.budget, c)} <small>/ ${data.settings.cycle === "salary" ? "salary period" : data.settings.cycle === "payday" ? "allowance period" : data.settings.cycle === "biweekly" ? "2 weeks" : data.settings.cycle === "weekly" ? "week" : "month"}</small></h2><p>The amount you choose to spend, separate from logged income.</p></div>${button("Edit plan", "budget-dialog", "pencil-simple", "button soft")}</div><div class="section-title"><div><h2>Monthly category limits</h2><p>Keep a little structure around the things that add up.</p></div><span class="soft-badge">${monthDate(month).toLocaleDateString("en", { month: "long" })}</span></div><div class="limit-grid">${limits
       .map(([cat, limit]) => {
         const used = by[cat] || 0,
           pct = percent(used, limit);
@@ -275,6 +320,8 @@ export function planView(ctx) {
   return `${title("A LITTLE PLANNING GOES A LONG WAY", "Make room for what matters.", "Your spending, future plans, and everyday commitments.", action)}<div class="subnav" role="group" aria-label="Plan sections">${[
     ["limits", "Spending limits", "wallet"],
     ["goals", "Savings goals", "target"],
+    ["salary", "Paydays", "briefcase"],
+    ["monthly", "Monthly bills", "repeat"],
     ["bills", "Upcoming", "calendar-dots"],
   ]
     .map(
@@ -393,6 +440,7 @@ export function settingsView(ctx) {
     content = `<div class="settings-grid"><section class="panel">${panelHead("A spending plan that fits you", "Start with the amount available after fixed commitments.")}<form id="budget-settings" class="form"><label>Amount available to spend<input name="budget" inputmode="decimal" required value="${esc(data.settings.budget)}"></label><div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Budget period<select name="cycle">${[
       ["monthly", "Monthly"],
       ["payday", "Until next allowance / income"],
+      ["salary", "Twice monthly (salary dates)"],
       ["weekly", "Weekly"],
       ["biweekly", "Every 2 weeks"],
     ]
@@ -402,7 +450,7 @@ export function settingsView(ctx) {
       )
       .join(
         "",
-      )}</select></label></div>${paydayFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
+      )}</select></label></div>${paydayFields(data.settings)}${salaryFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
   return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(colorMode(data.settings) === "dark" ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${colorMode(data.settings) === "dark" ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${colorMode(data.settings) === "dark"}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
     ["general", "Spending plan", "wallet"],
     ["accounts", "Accounts", "credit-card"],

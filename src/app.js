@@ -1,8 +1,8 @@
-import { paydayFields, updatePaydayFields } from "./payday-ui.js";
+import { paydayFields, salaryFields, updatePaydayFields } from "./payday-ui.js";
 import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
 import "./app.css";
-import { dayKey, validatePayday } from "./budget.js";
+import { dayKey, validatePayday, validateSalary } from "./budget.js";
 import {
   load,
   save,
@@ -29,6 +29,7 @@ import {
   shiftMonth,
   localDate,
   advanceDueDate,
+  nextDueDateForDay,
 } from "./model.js";
 import {
   esc,
@@ -38,6 +39,7 @@ import {
   iconButton,
   empty,
   frequencyLabels,
+  dayOrdinal,
   logo,
 } from "./ui.js";
 import {
@@ -797,6 +799,7 @@ function budgetDialog() {
     `<label>Available to spend<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budget || Math.max(0, accountSummary(data).spendable) || "")}" placeholder="8000"></label>${accountSummary(data).configured ? '<button type="button" class="text-button" id="use-account-funds">Use available spending-account balance</button>' : ""}<div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
       ["monthly", "Monthly"],
       ["payday", "Until next allowance / income"],
+      ["salary", "Twice monthly (salary dates)"],
       ["weekly", "Weekly"],
       ["biweekly", "Every 2 weeks"],
     ]
@@ -806,7 +809,7 @@ function budgetDialog() {
       )
       .join(
         "",
-      )}</select></label></div>${paydayFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label>${!accountSummary(data).configured && !data.transactions.length && !data.transfers.length ? '<label class="checkbox"><input type="checkbox" name="cashStartingBalance" checked> This is also my current Cash balance</label>' : ""}<p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
+      )}</select></label></div>${paydayFields(data.settings)}${salaryFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label>${!accountSummary(data).configured && !data.transactions.length && !data.transfers.length ? '<label class="checkbox"><input type="checkbox" name="cashStartingBalance" checked> This is also my current Cash balance</label>' : ""}<p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
     { subtitle: "YOUR SPENDING PLAN", submitLabel: "Save my plan" },
   );
   updatePaydayFields(d);
@@ -824,11 +827,23 @@ function budgetDialog() {
 function saveBudget(f) {
   const budget =
     Number(f.get("budget")) === 0 ? 0 : parseAmount(f.get("budget"));
+  const cycle = f.get("cycle");
+  const salary =
+    cycle === "salary"
+      ? {
+          enabled: true,
+          day1: Number(f.get("salaryDay1")),
+          day2: Number(f.get("salaryDay2")),
+          amount1: optionalAmount(f.get("salaryAmount1")),
+          amount2: optionalAmount(f.get("salaryAmount2")),
+        }
+      : null;
   const schedule = {
-    cycle: f.get("cycle"),
+    cycle,
     budgetStart: f.get("budgetStart"),
     nextPayday: f.get("nextPayday"),
     repeatPayday: f.has("repeatPayday"),
+    ...(salary ? { salary } : {}),
   };
   validatePayday(schedule);
   change((next) => {
@@ -847,6 +862,91 @@ function saveBudget(f) {
       rollover: f.has("rollover"),
     };
   }, "Spending plan saved");
+}
+
+function optionalAmount(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return 0;
+  const n = Number(text.replace(/[,\s]/g, ""));
+  if (!Number.isFinite(n) || n < 0 || n > 1e12)
+    throw new Error("Salary amounts must be zero or more.");
+  return round(n);
+}
+
+function salaryDialog() {
+  const d = modal(
+    "Two paydays. One clear plan.",
+    `${salaryFields(data.settings, { visible: true, includeEnabled: true })}<label class="switch-label"><span><strong>Use these dates for my spending plan</strong><small>Each salary period starts on a payday and ends on the next one.</small></span><input type="checkbox" role="switch" name="useSalaryForBudget" ${data.settings.cycle === "salary" ? "checked" : ""}></label><p class="small muted">Turn this off to keep the spending plan on its current period. Your salary schedule stays here for reference and logging.</p>`,
+    { subtitle: "SALARY PAYDAYS", submitLabel: "Save paydays" },
+  );
+  formSubmit(d, (f) => {
+    const useForBudget = f.has("useSalaryForBudget");
+    const salary = {
+      enabled: useForBudget || f.has("salaryEnabled"),
+      day1: Number(f.get("salaryDay1")),
+      day2: Number(f.get("salaryDay2")),
+      amount1: optionalAmount(f.get("salaryAmount1")),
+      amount2: optionalAmount(f.get("salaryAmount2")),
+    };
+    validateSalary(salary);
+    change((next) => {
+      next.settings.salary = salary;
+      if (useForBudget) next.settings.cycle = "salary";
+      else if (next.settings.cycle === "salary") next.settings.cycle = "monthly";
+    }, salary.enabled ? "Salary paydays saved" : "Salary paydays turned off");
+    d.close();
+  });
+}
+
+function monthlyBillDialog(bill = {}) {
+  const editing = Boolean(bill.id);
+  const dueDay =
+    Number(bill.anchorDay) ||
+    (bill.dueDate ? localDate(bill.dueDate).getDate() : new Date().getDate());
+  const d = modal(
+    editing ? "Keep the monthly rhythm." : "A monthly bill, handled.",
+    `<label>Name<input name="name" required maxlength="60" value="${esc(bill.name || "")}" placeholder="Streaming, internet, rent"></label><div class="form-row"><label>Amount<input name="amount" inputmode="decimal" required value="${esc(bill.amount || "")}" placeholder="0.00"></label><label>Due day <span class="optional">of each month</span><input type="number" name="dueDay" min="1" max="31" step="1" inputmode="numeric" required value="${esc(dueDay)}"></label></div><label>Category${categorySelect("expense", bill.category || "Subscriptions")}</label><label>Account${accountSelect(transactionAccountId(data, bill))}</label><p class="small muted">In months without this date, it falls on the last day. Nothing is logged automatically — use <strong>Mark paid</strong> when it happens.</p>${editing ? '<button type="button" class="button danger small" id="delete-monthly-bill">Delete monthly bill</button>' : ""}`,
+    { subtitle: "MONTHLY BILL", submitLabel: editing ? "Save bill" : "Add monthly bill" },
+  );
+  d.querySelector("#delete-monthly-bill")?.addEventListener("click", () => {
+    try {
+      change((next) => {
+        next.bills = next.bills.filter((b) => b.id !== bill.id);
+      }, "Monthly bill deleted");
+      d.close();
+    } catch (e) {
+      d.querySelector(".form-error").textContent = e.message;
+    }
+  });
+  formSubmit(d, (f) => {
+    const day = Number(f.get("dueDay"));
+    if (!Number.isInteger(day) || day < 1 || day > 31)
+      throw new Error("Choose a due day from 1 to 31.");
+    const dueDate =
+      editing && Number(bill.anchorDay || dueDay) === day && bill.dueDate
+        ? bill.dueDate
+        : nextDueDateForDay(day);
+    const item = {
+      ...bill,
+      id: bill.id || uid(),
+      name: String(f.get("name")).trim(),
+      type: "expense",
+      category: f.get("category"),
+      amount: parseAmount(f.get("amount")),
+      dueDate,
+      anchorDay: day,
+      frequency: "monthly",
+      accountId: f.get("accountId"),
+      paymentMethod: methodForAccount(data, f.get("accountId")),
+      completed: false,
+    };
+    change((next) => {
+      if (bill.id)
+        next.bills = next.bills.map((b) => (b.id === bill.id ? item : b));
+      else next.bills.push(item);
+    }, editing ? "Monthly bill updated" : "Monthly bill saved");
+    d.close();
+  });
 }
 
 function download(name, content, type = "application/json") {
@@ -957,7 +1057,7 @@ const lastPayments = new Map();
 app.addEventListener("click", async (event) => {
   const el = event.target.closest("[data-action]");
   if (!el) return;
-  const { action, id, value, category, view, date } = el.dataset;
+  const { action, id, value, category, view, date, day } = el.dataset;
   try {
     switch (action) {
       case "navigate":
@@ -1175,6 +1275,44 @@ app.addEventListener("click", async (event) => {
       case "edit-bill":
         billDialog(data.bills.find((b) => b.id === id));
         break;
+      case "add-monthly-bill":
+        monthlyBillDialog();
+        break;
+      case "edit-monthly-bill":
+        monthlyBillDialog(data.bills.find((b) => b.id === id));
+        break;
+      case "edit-salary":
+        salaryDialog();
+        break;
+      case "use-salary-plan":
+        try {
+          validateSalary(data.settings.salary);
+          change((next) => {
+            next.settings.salary.enabled = true;
+            next.settings.cycle = "salary";
+          }, "Spending plan now follows your salary paydays");
+        } catch {
+          salaryDialog();
+        }
+        break;
+      case "log-salary": {
+        const salary = data.settings.salary || {};
+        const payDay = Number(day);
+        const amount =
+          Number(salary.day1) === payDay
+            ? Number(salary.amount1) || 0
+            : Number(salary.day2) === payDay
+              ? Number(salary.amount2) || 0
+              : 0;
+        entryDialog({
+          type: "income",
+          category: "Salary",
+          amount: amount || "",
+          note: `Salary · ${dayOrdinal(payDay)}`,
+          date: new Date().toISOString(),
+        });
+        break;
+      }
       case "pay-bill": {
         if (Date.now() - (lastPayments.get(id) || 0) < 1500) break;
         const b = data.bills.find((b) => b.id === id);
