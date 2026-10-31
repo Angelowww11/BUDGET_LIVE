@@ -6,6 +6,16 @@ export const total = (items) =>
 export const monthKey = (date) => dayKey(date).slice(0, 7);
 export const inMonth = (items, month) =>
   items.filter((t) => monthKey(t.date) === month);
+export function monthTotals(data, month, asOf = new Date()) {
+  const end = new Date(asOf);
+  end.setHours(23, 59, 59, 999);
+  const tx = inMonth(data.transactions, month).filter(
+    (t) => new Date(t.date) <= end,
+  );
+  const income = total(tx.filter((t) => t.type === "income"));
+  const expense = total(tx.filter((t) => t.type === "expense"));
+  return { tx, income, expense, net: income - expense };
+}
 export const localDate = (date) => new Date(`${date}T12:00:00`);
 export const monthDate = (month) => new Date(`${month}-01T12:00:00`);
 export const shiftMonth = (month, amount) => {

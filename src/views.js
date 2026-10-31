@@ -19,6 +19,7 @@ import { journalRange, journalItems } from "./journal.js";
 import {
   total,
   inMonth,
+  monthTotals,
   monthKey,
   monthDate,
   shiftMonth,
@@ -44,12 +45,6 @@ const title = (eyebrow, heading, detail, action = "") =>
   `<div class="page-heading"><div><p class="eyebrow">${eyebrow}</p><h1>${heading}</h1>${detail ? `<p class="page-description">${detail}</p>` : ""}</div>${action}</div>`;
 export function monthPicker(month) {
   return `<div class="month-picker">${iconButton("Previous month", "previous-month", "caret-left")}<label class="month-label"><span>${monthDate(month).toLocaleDateString("en", { month: "long", year: "numeric" })}</span><input type="month" aria-label="Select month" id="selected-month" value="${month}"></label>${iconButton("Next month", "next-month", "caret-right")}</div>`;
-}
-export function monthTotals(data, month) {
-  const tx = inMonth(data.transactions, month);
-  const income = total(tx.filter((t) => t.type === "income"));
-  const expense = total(tx.filter((t) => t.type === "expense"));
-  return { tx, income, expense, net: income - expense };
 }
 function panelHead(name, description = "", action = "") {
   return `<div class="panel-heading"><div><h2>${name}</h2>${description ? `<p>${description}</p>` : ""}</div>${action}</div>`;
@@ -264,7 +259,12 @@ export function planView(ctx) {
         : planTab === "monthly"
           ? button("New monthly bill", "add-monthly-bill", "plus")
           : planTab === "salary"
-            ? button("Edit paydays", "edit-salary", "pencil-simple", "button soft")
+            ? button(
+                "Edit paydays",
+                "edit-salary",
+                "pencil-simple",
+                "button soft",
+              )
             : button("Set a category limit", "add-limit", "plus");
   let content;
   if (planTab === "goals") {
@@ -285,7 +285,9 @@ export function planView(ctx) {
             days = daysBetween(new Date(), next);
           return `<section class="panel salary-card"><div class="salary-card-top"><span class="salary-day">${dayOrdinal(slot.day)}</span>${button(slot.amount ? "Log salary" : "Set amount", "log-salary", slot.amount ? "check" : "pencil-simple", "button small soft", `data-day="${slot.day}"`)}</div><strong class="salary-amount">${slot.amount ? money(slot.amount, c) : "Amount not set"}</strong><p class="small muted">Next payday: ${next.toLocaleDateString("en", { weekday: "short", month: "short", day: "numeric" })}${days === 0 ? " · today" : days === 1 ? " · tomorrow" : ` · in ${days} days`}</p></section>`;
         })
-        .join("")}</div><div class="info-banner">${icon("wallet")}<p>${data.settings.cycle === "salary" ? "Each spending period runs from one payday to the next. Logging a salary adds a normal income entry; it doesn’t change your spending amount automatically." : "Your spending plan is not using these dates yet."}${data.settings.cycle !== "salary" ? ` ${button("Use for my spending plan", "use-salary-plan", "", "text-button")}` : ""}</p></div>`;
+        .join(
+          "",
+        )}</div><div class="info-banner">${icon("wallet")}<p>${data.settings.cycle === "salary" ? "Each spending period runs from one payday to the next. Logging a salary adds a normal income entry; it doesn’t change your spending amount automatically." : "Your spending plan is not using these dates yet."}${data.settings.cycle !== "salary" ? ` ${button("Use for my spending plan", "use-salary-plan", "", "text-button")}` : ""}</p></div>`;
   } else if (planTab === "monthly") {
     const bills = data.bills
       .filter(
@@ -350,8 +352,10 @@ function categoryDonut(data, pairs) {
 function paceChart(data, month) {
   const start = monthDate(month),
     days = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
   const items = inMonth(data.transactions, month).filter(
-    (t) => t.type === "expense",
+    (t) => t.type === "expense" && new Date(t.date) <= todayEnd,
   );
   const byDay = Array.from({ length: days }, (_, i) =>
     total(items.filter((t) => new Date(t.date).getDate() === i + 1)),

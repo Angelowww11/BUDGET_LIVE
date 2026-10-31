@@ -890,11 +890,15 @@ function salaryDialog() {
       amount2: optionalAmount(f.get("salaryAmount2")),
     };
     validateSalary(salary);
-    change((next) => {
-      next.settings.salary = salary;
-      if (useForBudget) next.settings.cycle = "salary";
-      else if (next.settings.cycle === "salary") next.settings.cycle = "monthly";
-    }, salary.enabled ? "Salary paydays saved" : "Salary paydays turned off");
+    change(
+      (next) => {
+        next.settings.salary = salary;
+        if (useForBudget) next.settings.cycle = "salary";
+        else if (next.settings.cycle === "salary")
+          next.settings.cycle = "monthly";
+      },
+      salary.enabled ? "Salary paydays saved" : "Salary paydays turned off",
+    );
     d.close();
   });
 }
@@ -907,7 +911,10 @@ function monthlyBillDialog(bill = {}) {
   const d = modal(
     editing ? "Keep the monthly rhythm." : "A monthly bill, handled.",
     `<label>Name<input name="name" required maxlength="60" value="${esc(bill.name || "")}" placeholder="Streaming, internet, rent"></label><div class="form-row"><label>Amount<input name="amount" inputmode="decimal" required value="${esc(bill.amount || "")}" placeholder="0.00"></label><label>Due day <span class="optional">of each month</span><input type="number" name="dueDay" min="1" max="31" step="1" inputmode="numeric" required value="${esc(dueDay)}"></label></div><label>Category${categorySelect("expense", bill.category || "Subscriptions")}</label><label>Account${accountSelect(transactionAccountId(data, bill))}</label><p class="small muted">In months without this date, it falls on the last day. Nothing is logged automatically — use <strong>Mark paid</strong> when it happens.</p>${editing ? '<button type="button" class="button danger small" id="delete-monthly-bill">Delete monthly bill</button>' : ""}`,
-    { subtitle: "MONTHLY BILL", submitLabel: editing ? "Save bill" : "Add monthly bill" },
+    {
+      subtitle: "MONTHLY BILL",
+      submitLabel: editing ? "Save bill" : "Add monthly bill",
+    },
   );
   d.querySelector("#delete-monthly-bill")?.addEventListener("click", () => {
     try {
@@ -941,11 +948,14 @@ function monthlyBillDialog(bill = {}) {
       paymentMethod: methodForAccount(data, f.get("accountId")),
       completed: false,
     };
-    change((next) => {
-      if (bill.id)
-        next.bills = next.bills.map((b) => (b.id === bill.id ? item : b));
-      else next.bills.push(item);
-    }, editing ? "Monthly bill updated" : "Monthly bill saved");
+    change(
+      (next) => {
+        if (bill.id)
+          next.bills = next.bills.map((b) => (b.id === bill.id ? item : b));
+        else next.bills.push(item);
+      },
+      editing ? "Monthly bill updated" : "Monthly bill saved",
+    );
     d.close();
   });
 }
@@ -1537,6 +1547,17 @@ app.addEventListener("submit", (e) => {
 });
 window.addEventListener("online", render);
 window.addEventListener("offline", render);
+let renderedDay = dayKey(new Date());
+setInterval(() => {
+  const currentDay = dayKey(new Date());
+  if (currentDay === renderedDay || document.querySelector("dialog[open]"))
+    return;
+  if (ctx.activityDate === renderedDay && ctx.activityPeriod === "day")
+    ctx.activityDate = currentDay;
+  if (ctx.month === renderedDay.slice(0, 7)) ctx.month = currentDay.slice(0, 7);
+  renderedDay = currentDay;
+  render();
+}, 30_000);
 window.addEventListener("storage", (e) => {
   if (e.key !== STORAGE_KEY || ctx.demo) return;
   if (document.querySelector("dialog[open]")) {
