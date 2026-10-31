@@ -24,6 +24,7 @@ import {
   shiftMonth,
   localDate,
   daysBetween,
+  paidThisMonth,
   categoryTotals,
   activityStreak,
 } from "./model.js";
@@ -231,7 +232,7 @@ function billRow(data, b, compact = false, editAction = "edit-bill") {
               month: "short",
               day: "numeric",
             });
-  return `<div class="bill-row">${categoryBadge(data, b.category, b.type)}<div><strong>${esc(b.name)}</strong><span class="${due < 0 ? "expense" : ""}">${dueText}${compact ? "" : ` · ${frequencyLabels[b.frequency] || "Monthly"}`}</span></div><strong class="bill-amount">${money(b.amount, data.settings.currency)}</strong>${compact ? "" : `<div class="bill-actions">${button(b.type === "income" ? "Received" : "Mark paid", "pay-bill", "check", "button small soft", `data-id="${esc(b.id)}"`)}${iconButton("Edit recurring entry", editAction, "pencil-simple", `data-id="${esc(b.id)}"`)}</div>`}</div>`;
+  return `<div class="bill-row">${categoryBadge(data, b.category, b.type)}<div><strong>${esc(b.name)}</strong><span class="${due < 0 ? "expense" : ""}">${dueText}${compact ? "" : ` · ${frequencyLabels[b.frequency] || "Monthly"}`}</span></div><strong class="bill-amount">${money(b.amount, data.settings.currency)}</strong>${compact ? "" : `<div class="bill-actions">${paidThisMonth(data.transactions, b) ? `<button type="button" class="button small soft" disabled aria-disabled="true" title="Already logged this month. You can log it again next month.">${icon("check")}<span>${b.type === "income" ? "Received this month" : "Paid this month"}</span></button>` : button(b.type === "income" ? "Received" : "Mark paid", "pay-bill", "check", "button small soft", `data-id="${esc(b.id)}"`)}${iconButton("Edit recurring entry", editAction, "pencil-simple", `data-id="${esc(b.id)}"`)}</div>`}</div>`;
 }
 
 function goalCard(data, g, compact = false) {

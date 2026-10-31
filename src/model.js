@@ -46,6 +46,15 @@ export function advanceDueDate(date, frequency, anchorDay) {
   }
   return dayKey(d);
 }
+// A monthly recurring entry can be confirmed once per calendar month, so a
+// stray extra tap on "Mark paid" can't log (and skip ahead) another month.
+export function paidThisMonth(transactions, bill, now = new Date()) {
+  if (bill.frequency !== "monthly") return false;
+  const month = monthKey(now);
+  return transactions.some(
+    (t) => t.recurringId === bill.id && monthKey(t.date) === month,
+  );
+}
 export function nextDueDateForDay(day, from = new Date()) {
   const d = new Date(from);
   d.setHours(0, 0, 0, 0);

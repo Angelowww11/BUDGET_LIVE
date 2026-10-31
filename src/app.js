@@ -30,6 +30,7 @@ import {
   localDate,
   advanceDueDate,
   nextDueDateForDay,
+  paidThisMonth,
 } from "./model.js";
 import {
   esc,
@@ -1317,6 +1318,10 @@ app.addEventListener("click", async (event) => {
         if (Date.now() - (lastPayments.get(id) || 0) < 1500) break;
         const b = data.bills.find((b) => b.id === id);
         if (!b || b.completed) break;
+        if (paidThisMonth(data.transactions, b)) {
+          notify("Already logged this month. You can log it again next month.");
+          break;
+        }
         change(
           (next) => {
             next.transactions.push({
