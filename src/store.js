@@ -1,0 +1,6 @@
+const KEY='daylight-budget-v1';
+const defaults={version:1,settings:{budget:0,currency:'PHP',cycle:'monthly',rollover:true},transactions:[],categories:['Food','Transport','Bills','Shopping','Health','Entertainment','Groceries','Other'],templates:[],goals:[]};
+export function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return structuredClone(defaults);const data=JSON.parse(raw);return {...structuredClone(defaults),...data,settings:{...defaults.settings,...data.settings},transactions:Array.isArray(data.transactions)?data.transactions:[],categories:Array.isArray(data.categories)?data.categories:defaults.categories,templates:Array.isArray(data.templates)?data.templates:[],goals:Array.isArray(data.goals)?data.goals:[]};}catch{return structuredClone(defaults)}}
+export function save(data){localStorage.setItem(KEY,JSON.stringify(data));}
+export function backup(data){return JSON.stringify({app:'daylight-budget',exportedAt:new Date().toISOString(),data},null,2)}
+export function restore(text){const parsed=JSON.parse(text);if(parsed.app!=='daylight-budget'||!parsed.data||!Array.isArray(parsed.data.transactions)||!parsed.data.settings)throw Error('This is not a valid Daylight Budget backup.');return parsed.data;}
