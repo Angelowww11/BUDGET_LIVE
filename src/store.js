@@ -53,7 +53,8 @@ export function emptyState() {
       budget: 0,
       currency: "PHP",
       cycle: "monthly",
-      rollover: false,
+      rollover: true,
+      dailyRebalanceVersion: 1,
       carryover: true,
       carryoverFrom: dayKey(new Date()).slice(0, 7),
       carryoverOpening: 0,
@@ -96,6 +97,10 @@ export function normalize(value) {
   };
   if (!value.settings.carryoverFrom)
     next.settings.carryoverFrom = previousMonth();
+  if (value.settings.dailyRebalanceVersion !== 1) {
+    next.settings.rollover = true;
+    next.settings.dailyRebalanceVersion = 1;
+  }
   next.settings.colorMode = colorMode(value.settings);
   next.settings.salary = normalizeSalary(value.settings.salary);
   if (next.settings.cycle === "salary" && !next.settings.salary.enabled)

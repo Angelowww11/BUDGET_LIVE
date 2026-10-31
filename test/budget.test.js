@@ -117,3 +117,12 @@ test("unused monthly spending money carries through multiple months", () => {
     8000,
   );
 });
+test("daily spending adjusts when the available account balance changes", () => {
+  const plan = { budget: 8000, cycle: "monthly", rollover: true };
+  const date = new Date(2026, 9, 1, 12);
+  const full = budgetSummary(plan, [], date, 8000);
+  const lower = budgetSummary(plan, [], date, 4000);
+  assert.equal(full.safePerDay.toFixed(2), "258.06");
+  assert.equal(lower.safePerDay.toFixed(2), "129.03");
+  assert.equal(lower.remaining, 8000);
+});

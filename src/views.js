@@ -109,11 +109,16 @@ function budgetRing(data, s) {
 export function homeView(ctx) {
   const { data } = ctx,
     now = new Date(),
-    s = budgetSummary(data.settings, data.transactions),
     c = data.settings.currency;
   const m = monthTotals(data, monthKey(now)),
     accounts = accountSummary(data),
     today = dayKey(now);
+  const s = budgetSummary(
+    data.settings,
+    data.transactions,
+    now,
+    accounts.configured ? accounts.spendable : Infinity,
+  );
   const todayEntries = data.transactions
     .filter((t) => t.type === "expense" && dayKey(t.date) === today)
     .sort((a, b) => new Date(b.date) - new Date(a.date));

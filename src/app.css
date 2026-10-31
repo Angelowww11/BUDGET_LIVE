@@ -5281,3 +5281,39 @@ select {
 .carryover-fields[hidden] {
   display: none;
 }
+@media (max-width: 420px) {
+  .today-budget-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 16px;
+  }
+  .today-budget-grid > div:first-child {
+    grid-column: 1 / -1;
+    border-right: 0;
+    border-bottom: 1px solid var(--hero-line);
+    padding: 0 0 11px;
+  }
+  .today-budget-grid > div:nth-child(2) {
+    padding-right: 12px;
+  }
+  .today-budget-grid strong {
+    font-size: 17px;
+  }
+  .today-budget-grid > div:first-child strong {
+    font-size: 23px;
+  }
+  .today-budget-grid span {
+    font-size: 10px;
+  }
+  .allowance-note {
+    font-size: 11px;
+    line-height: 1.45;
+    gap: 9px;
+  }
+  .allowance-note > .text-button {
+    font-size: 10px;
+  }
+  .budget-equation {
+    justify-content: space-between;
+    gap: 5px;
+  }
+}

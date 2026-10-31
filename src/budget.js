@@ -159,7 +159,12 @@ export function periodBounds(today, cycle = "monthly", settings = {}) {
     active: d >= start && d < end,
   };
 }
-export function budgetSummary(settings, transactions, today = new Date()) {
+export function budgetSummary(
+  settings,
+  transactions,
+  today = new Date(),
+  availableBalance = Infinity,
+) {
   const { start, end, days, remainingDays, active } = periodBounds(
     today,
     settings.cycle,
@@ -208,7 +213,10 @@ export function budgetSummary(settings, transactions, today = new Date()) {
   }
   const total = baseBudget + carryover;
   const daily = days ? total / days : 0;
-  const beforeToday = Math.max(0, total - spent + todaySpent);
+  const beforeToday = Math.max(
+    0,
+    Math.min(total - spent + todaySpent, availableBalance + todaySpent),
+  );
   const safePerDay = !active
     ? 0
     : settings.rollover === false
