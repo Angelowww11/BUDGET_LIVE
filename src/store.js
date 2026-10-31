@@ -1,6 +1,195 @@
-const KEY='daylight-budget-v1';
-const defaults={version:1,settings:{budget:0,currency:'PHP',cycle:'monthly',rollover:true,theme:'green'},transactions:[],categories:['Food','Transport','Bills','Shopping','Health','Entertainment','Groceries','Other'],templates:[],goals:[]};
-export function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return structuredClone(defaults);const data=JSON.parse(raw);return {...structuredClone(defaults),...data,settings:{...defaults.settings,...data.settings},transactions:Array.isArray(data.transactions)?data.transactions:[],categories:Array.isArray(data.categories)?data.categories:defaults.categories,templates:Array.isArray(data.templates)?data.templates:[],goals:Array.isArray(data.goals)?data.goals:[]};}catch{return structuredClone(defaults)}}
-export function save(data){localStorage.setItem(KEY,JSON.stringify(data));}
-export function backup(data){return JSON.stringify({app:'daylight-budget',exportedAt:new Date().toISOString(),data},null,2)}
-export function restore(text){const parsed=JSON.parse(text);if(parsed.app!=='daylight-budget'||!parsed.data||!Array.isArray(parsed.data.transactions)||!parsed.data.settings)throw Error('This is not a valid Daylight Budget backup.');return parsed.data;}
+export const STORAGE_KEY = "daylight-budget-v1";
+export const RECOVERY_KEY = `${STORAGE_KEY}-recovery`;
+let lastRead = null;
+
+export function emptyState() {
+  return {
+    version: 1,
+    settings: {
+      budget: 0,
+      currency: "PHP",
+      cycle: "monthly",
+      rollover: true,
+      theme: "green",
+    },
+    transactions: [],
+    categories: [],
+    categoryDetails: {},
+    hiddenCategories: [],
+    templates: [],
+    goals: [],
+    bills: [],
+    categoryBudgets: {},
+  };
+}
+
+function array(value, label) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value))
+    throw new Error(`The ${label} section is damaged. Restore a valid backup.`);
+  return value;
+}
+
+export function normalize(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("This file does not contain budget data.");
+  if (!value.settings || typeof value.settings !== "object")
+    throw new Error("Budget settings are missing.");
+  if (value.version && value.version > 1)
+    throw new Error("This backup needs a newer version of Daylight.");
+  const base = emptyState();
+  const next = {
+    ...base,
+    ...value,
+    settings: { ...base.settings, ...value.settings },
+  };
+  for (const key of [
+    "transactions",
+    "categories",
+    "templates",
+    "goals",
+    "bills",
+    "hiddenCategories",
+  ])
+    next[key] = array(value[key], key);
+  if (
+    !Number.isFinite(Number(next.settings.budget)) ||
+    Number(next.settings.budget) < 0
+  )
+    throw new Error("The budget amount is invalid.");
+  next.settings.budget = Number(next.settings.budget);
+  try {
+    new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: next.settings.currency,
+    });
+  } catch {
+    throw new Error("The backup currency is invalid.");
+  }
+  const ids = new Set();
+  for (const t of next.transactions) {
+    if (
+      !t ||
+      !t.id ||
+      ids.has(t.id) ||
+      !["income", "expense"].includes(t.type) ||
+      !Number.isFinite(Number(t.amount)) ||
+      Number(t.amount) <= 0 ||
+      !Number.isFinite(new Date(t.date).getTime()) ||
+      typeof t.category !== "string"
+    )
+      throw new Error(
+        "One or more transactions are invalid. Your current records have not been replaced.",
+      );
+    ids.add(t.id);
+    if (t.tags !== undefined && !Array.isArray(t.tags))
+      throw new Error("Transaction tags are invalid.");
+  }
+  for (const g of next.goals) {
+    if (
+      !g ||
+      !g.id ||
+      typeof g.name !== "string" ||
+      !Number.isFinite(Number(g.target)) ||
+      Number(g.target) <= 0 ||
+      !Number.isFinite(Number(g.saved)) ||
+      Number(g.saved) < 0
+    )
+      throw new Error("A savings goal is invalid.");
+  }
+  for (const t of next.templates) {
+    if (
+      !t ||
+      !t.id ||
+      typeof t.category !== "string" ||
+      !Number.isFinite(Number(t.amount)) ||
+      Number(t.amount) <= 0
+    )
+      throw new Error("A quick-add shortcut is invalid.");
+  }
+  for (const b of next.bills) {
+    if (
+      !b ||
+      !b.id ||
+      typeof b.name !== "string" ||
+      !Number.isFinite(Number(b.amount)) ||
+      Number(b.amount) <= 0 ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(b.dueDate)
+    )
+      throw new Error("A scheduled payment is invalid.");
+    if (
+      !Number.isFinite(new Date(`${b.dueDate}T12:00:00`).getTime()) ||
+      !["once", "weekly", "biweekly", "monthly", "yearly"].includes(b.frequency)
+    )
+      throw new Error("A recurring schedule is invalid.");
+  }
+  for (const key of ["categoryBudgets", "categoryDetails"]) {
+    if (!next[key] || typeof next[key] !== "object" || Array.isArray(next[key]))
+      throw new Error(`The ${key} section is invalid.`);
+  }
+  if (
+    next.categories.some((name) => typeof name !== "string") ||
+    next.hiddenCategories.some((name) => typeof name !== "string")
+  )
+    throw new Error("Category names are invalid.");
+  for (const amount of Object.values(next.categoryBudgets))
+    if (!Number.isFinite(Number(amount)) || Number(amount) < 0)
+      throw new Error("A category limit is invalid.");
+  for (const meta of Object.values(next.categoryDetails))
+    if (
+      !meta ||
+      typeof meta !== "object" ||
+      !["income", "expense"].includes(meta.type)
+    )
+      throw new Error("A custom category is invalid.");
+  return next;
+}
+
+export function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  lastRead = raw;
+  if (!raw) return emptyState();
+  try {
+    return normalize(JSON.parse(raw));
+  } catch (error) {
+    throw new Error(`Your saved data could not be opened. ${error.message}`);
+  }
+}
+
+export function save(value, { replace = false } = {}) {
+  const next = normalize(value);
+  const current = localStorage.getItem(STORAGE_KEY);
+  if (!replace && current !== lastRead)
+    throw new Error(
+      "This budget changed in another window. Refresh to load the latest records before saving.",
+    );
+  const text = JSON.stringify(next);
+  // Keep a previous copy on the device. Never clear user storage on updates.
+  if (current && current !== text) localStorage.setItem(RECOVERY_KEY, current);
+  localStorage.setItem(STORAGE_KEY, text);
+  lastRead = text;
+  return next;
+}
+
+export function backup(data) {
+  return JSON.stringify(
+    { app: "daylight-budget", exportedAt: new Date().toISOString(), data },
+    null,
+    2,
+  );
+}
+
+export function restore(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Choose a valid Daylight JSON backup.");
+  }
+  if (
+    parsed.app !== "daylight-budget" ||
+    !Array.isArray(parsed.data?.transactions)
+  )
+    throw new Error("This is not a Daylight Budget backup.");
+  return normalize(parsed.data);
+}
