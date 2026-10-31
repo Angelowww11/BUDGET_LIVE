@@ -1,7 +1,7 @@
 import { budgetSummary, dayKey } from "./budget.js";
 import { categoryNames, categoryMeta, categoryBadge } from "./categories.js";
 import { icon } from "./icons.js";
-import { isDarkTheme } from "./appearance.js";
+import { colorMode, themeSwatch } from "./appearance.js";
 import {
   accountsPanel,
   accountsView,
@@ -362,7 +362,7 @@ export function settingsView(ctx) {
   const { data, settingsTab } = ctx;
   let content;
   if (settingsTab === "appearance")
-    content = `<section class="panel">${panelHead("Find your kind of daylight", "Light, dark, and a few colors to make it yours.")}<div class="theme-grid">${themes.map(([id, name, accent, tint]) => `<button class="theme-preview ${data.settings.theme === id ? "selected" : ""}" data-action="theme" data-value="${id}" aria-pressed="${data.settings.theme === id}" style="--preview-accent:${accent};--preview-tint:${tint}"><span class="mini-preview"><i></i><i></i><i></i><i></i></span><span>${name}${data.settings.theme === id ? icon("check-circle") : ""}</span></button>`).join("")}</div></section>`;
+    content = `<section class="panel">${panelHead("Find your kind of daylight", "Choose a color. Dark mode keeps your chosen palette.")}<div class="theme-grid">${themes.map(([id, name, accent, tint]) => `<button class="theme-preview ${data.settings.theme === id ? "selected" : ""}" data-action="theme" data-value="${id}" aria-pressed="${data.settings.theme === id}" style="--preview-accent:${themeSwatch(id, accent, tint, data.settings)[0]};--preview-tint:${themeSwatch(id, accent, tint, data.settings)[1]}"><span class="mini-preview"><i></i><i></i><i></i><i></i></span><span>${name}${data.settings.theme === id ? icon("check-circle") : ""}</span></button>`).join("")}</div></section>`;
   else if (settingsTab === "accounts") content = accountsView(ctx);
   else if (settingsTab === "categories")
     content = `<section class="panel">${panelHead("Make your categories yours", "Choose a name, icon, and color that you recognize instantly.", button("New category", "add-category", "plus", "button small primary"))}<div class="category-manager">${[
@@ -399,7 +399,7 @@ export function settingsView(ctx) {
       .join(
         "",
       )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
-  return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(isDarkTheme(data.settings.theme) ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${isDarkTheme(data.settings.theme) ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${isDarkTheme(data.settings.theme)}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
+  return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(colorMode(data.settings) === "dark" ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${colorMode(data.settings) === "dark" ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${colorMode(data.settings) === "dark"}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
     ["general", "Spending plan", "wallet"],
     ["accounts", "Accounts", "credit-card"],
     ["appearance", "Themes", "sun"],

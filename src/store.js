@@ -1,4 +1,5 @@
 import { initialAccounts, accountTypes } from "./accounts.js";
+import { colorMode } from "./appearance.js";
 export const STORAGE_KEY = "daylight-budget-v1";
 export const RECOVERY_KEY = `${STORAGE_KEY}-recovery`;
 let lastRead = null;
@@ -12,6 +13,7 @@ export function emptyState() {
       cycle: "monthly",
       rollover: false,
       theme: "green",
+      colorMode: "light",
     },
     transactions: [],
     categories: [],
@@ -46,6 +48,7 @@ export function normalize(value) {
     ...value,
     settings: { ...base.settings, ...value.settings },
   };
+  next.settings.colorMode = colorMode(value.settings);
   for (const key of [
     "transactions",
     "categories",
