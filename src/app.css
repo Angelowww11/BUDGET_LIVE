@@ -5153,3 +5153,52 @@ select {
   --shadow: 0 4px 18px #26362c04;
   color-scheme: light;
 }
+:root .payday-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+.payday-fields[hidden] {
+  display: none;
+}
+.payday-fields legend {
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.payday-fields .checkbox {
+  margin-top: 16px;
+}
+.payday-fields p {
+  margin-bottom: 0;
+}
+.payday-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--hero-line);
+}
+.payday-summary > span:not(.icon) {
+  flex: 1;
+  min-width: 0;
+}
+.payday-summary strong,
+.payday-summary small {
+  display: block;
+}
+.payday-summary strong {
+  font-size: 0.8rem;
+}
+.payday-summary small {
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+.payday-summary .text-button {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+}

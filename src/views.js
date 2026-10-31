@@ -1,3 +1,4 @@
+import { paydayFields } from "./payday-ui.js";
 import { budgetSummary, dayKey } from "./budget.js";
 import { categoryNames, categoryMeta, categoryBadge } from "./categories.js";
 import { icon } from "./icons.js";
@@ -116,11 +117,13 @@ export function homeView(ctx) {
   const pairs = categoryTotals(todayEntries),
     setup = s.total === 0;
   const cycleName =
-    data.settings.cycle === "monthly"
-      ? "month"
-      : data.settings.cycle === "weekly"
-        ? "week"
-        : "2 weeks";
+    data.settings.cycle === "payday"
+      ? "allowance period"
+      : data.settings.cycle === "monthly"
+        ? "month"
+        : data.settings.cycle === "weekly"
+          ? "week"
+          : "2 weeks";
   const adjusted = Math.abs(s.safePerDay - s.baseDaily) > 0.005;
   const upcoming = [...data.bills]
     .filter((b) => !b.completed)
@@ -130,7 +133,7 @@ export function homeView(ctx) {
   <div class="dashboard-grid"><div class="dashboard-main">
   <section class="daily-card balance-first"><div class="daily-heading"><span class="eyebrow">BUDGET BALANCE REMAINING</span>${button("Edit plan", "budget-dialog", "pencil-simple", "text-button")}</div><div class="daily-amount">${money(s.remaining, c)}</div><div class="budget-subline"><span>${money(s.spent, c)} spent of ${money(s.total, c)} this ${cycleName}</span><span>${s.remainingDays} ${s.remainingDays === 1 ? "day" : "days"} left</span></div>
   ${setup ? `<div class="setup-actions">${button("Set my budget", "budget-dialog", "arrow-right", "button primary")}${button("Explore a sample", "start-demo", "", "button plain")}</div>` : `<div class="budget-equation" aria-label="${s.total} divided by ${s.days} days equals ${money(s.baseDaily, c)} per day"><span>${money(s.total, c)}</span><i>÷</i><span>${s.days} days</span><i>=</i><strong>${money(s.baseDaily, c)}<small>/ day</small></strong></div>`}
-  <div class="today-budget-grid"><div><span>${adjusted ? "Adjusted limit today" : "Daily budget"}</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Spent today</span><strong class="${s.todaySpent > s.safePerDay ? "expense" : ""}">${money(s.todaySpent, c)}</strong></div><div class="today-left"><span>Left to spend today</span><strong>${money(s.leftToday, c)}</strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s budget used", s.percent >= 0.8)}
+  ${data.settings.cycle === "payday" ? `<div class="payday-summary">${icon("calendar-dots")}<span><strong>${s.active ? "Next allowance" : new Date() < s.start ? "Budget starts" : "Allowance date reached"}<br>${(new Date() < s.start ? s.start : s.end).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}</strong><small>${s.active ? `${s.remainingDays} spending days left, including today` : "Edit your plan to set the money and dates for your next allowance."}</small></span>${button("Change dates", "budget-dialog", "", "text-button")}</div>` : ""}<div class="today-budget-grid"><div><span>${adjusted ? "Adjusted limit today" : "Daily budget"}</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Spent today</span><strong class="${s.todaySpent > s.safePerDay ? "expense" : ""}">${money(s.todaySpent, c)}</strong></div><div class="today-left"><span>Left to spend today</span><strong>${money(s.leftToday, c)}</strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s budget used", s.percent >= 0.8)}
   ${!setup ? `<p class="allowance-note">${icon(data.settings.rollover ? "arrows-clockwise" : "calendar-blank")}${data.settings.rollover ? `Flexible rollover is on. Unspent money is shared across the ${s.remainingDays} remaining days.` : `Fixed daily limit: ${money(s.baseDaily, c)}. Your allowance never exceeds the budget remaining.`}${button(data.settings.rollover ? "Use fixed limit" : "Change", data.settings.rollover ? "fixed-daily-limit" : "budget-dialog", "", "text-button")}</p>` : ""}
   <button class="overview-account-link" data-action="view-accounts">${icon("wallet")}<span>Overall account balance <strong>${money(accounts.total, c)}</strong></span>${icon("caret-right")}</button></section>
   <section class="panel today-spending-panel">${panelHead("Where today’s money went", `${todayEntries.length} ${todayEntries.length === 1 ? "expense" : "expenses"} · ${money(s.todaySpent, c)} spent`, button("Day view", "today-activity", "arrow-right", "text-button"))}${
@@ -259,7 +262,7 @@ export function planView(ctx) {
     const limits = Object.entries(data.categoryBudgets).filter(
       ([, amount]) => amount > 0,
     );
-    content = `<div class="plan-banner"><span class="banner-art">${icon("wallet")}</span><div><span class="eyebrow">YOUR SPENDING PLAN</span><h2>${money(data.settings.budget, c)} <small>/ ${data.settings.cycle === "biweekly" ? "2 weeks" : data.settings.cycle === "weekly" ? "week" : "month"}</small></h2><p>The amount you choose to spend, separate from logged income.</p></div>${button("Edit plan", "budget-dialog", "pencil-simple", "button soft")}</div><div class="section-title"><div><h2>Monthly category limits</h2><p>Keep a little structure around the things that add up.</p></div><span class="soft-badge">${monthDate(month).toLocaleDateString("en", { month: "long" })}</span></div><div class="limit-grid">${limits
+    content = `<div class="plan-banner"><span class="banner-art">${icon("wallet")}</span><div><span class="eyebrow">YOUR SPENDING PLAN</span><h2>${money(data.settings.budget, c)} <small>/ ${data.settings.cycle === "payday" ? "allowance period" : data.settings.cycle === "biweekly" ? "2 weeks" : data.settings.cycle === "weekly" ? "week" : "month"}</small></h2><p>The amount you choose to spend, separate from logged income.</p></div>${button("Edit plan", "budget-dialog", "pencil-simple", "button soft")}</div><div class="section-title"><div><h2>Monthly category limits</h2><p>Keep a little structure around the things that add up.</p></div><span class="soft-badge">${monthDate(month).toLocaleDateString("en", { month: "long" })}</span></div><div class="limit-grid">${limits
       .map(([cat, limit]) => {
         const used = by[cat] || 0,
           pct = percent(used, limit);
@@ -389,6 +392,7 @@ export function settingsView(ctx) {
   else
     content = `<div class="settings-grid"><section class="panel">${panelHead("A spending plan that fits you", "Start with the amount available after fixed commitments.")}<form id="budget-settings" class="form"><label>Amount available to spend<input name="budget" inputmode="decimal" required value="${esc(data.settings.budget)}"></label><div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Budget period<select name="cycle">${[
       ["monthly", "Monthly"],
+      ["payday", "Until next allowance / income"],
       ["weekly", "Weekly"],
       ["biweekly", "Every 2 weeks"],
     ]
@@ -398,7 +402,7 @@ export function settingsView(ctx) {
       )
       .join(
         "",
-      )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
+      )}</select></label></div>${paydayFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
   return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(colorMode(data.settings) === "dark" ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${colorMode(data.settings) === "dark" ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${colorMode(data.settings) === "dark"}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
     ["general", "Spending plan", "wallet"],
     ["accounts", "Accounts", "credit-card"],

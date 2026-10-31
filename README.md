@@ -16,6 +16,7 @@ This is an installable web app with its own home-screen icon and standalone wind
 
 ## Features
 
+- Allowance-based budgets: choose **Edit plan → Until next allowance / income**, set the budget start and next payment date, and optionally repeat monthly. Daily limits use those dates instead of month end. The next payment date begins the new period; repeating renews the budget without adding an account transaction.
 - Balance-first overview with remaining budget, today’s spending and categories, overall account balance, and a visible division such as PHP 8,000 / 31 days = PHP 258.06 per day. New plans use a fixed daily allowance by default; existing rollover preferences are preserved.
 - A responsive overview, actual seven-day spending chart, period budget ring, and cash-flow summary.
 - Expense and income entry with a visual category grid, notes, dates, payment method, and tags.

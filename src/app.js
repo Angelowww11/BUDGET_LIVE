@@ -1,7 +1,8 @@
+import { paydayFields, updatePaydayFields } from "./payday-ui.js";
 import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
 import "./app.css";
-import { dayKey } from "./budget.js";
+import { dayKey, validatePayday } from "./budget.js";
 import {
   load,
   save,
@@ -795,6 +796,7 @@ function budgetDialog() {
     "Give your spending a plan.",
     `<label>Available to spend<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budget || Math.max(0, accountSummary(data).spendable) || "")}" placeholder="8000"></label>${accountSummary(data).configured ? '<button type="button" class="text-button" id="use-account-funds">Use available spending-account balance</button>' : ""}<div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
       ["monthly", "Monthly"],
+      ["payday", "Until next allowance / income"],
       ["weekly", "Weekly"],
       ["biweekly", "Every 2 weeks"],
     ]
@@ -804,9 +806,10 @@ function budgetDialog() {
       )
       .join(
         "",
-      )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label>${!accountSummary(data).configured && !data.transactions.length && !data.transfers.length ? '<label class="checkbox"><input type="checkbox" name="cashStartingBalance" checked> This is also my current Cash balance</label>' : ""}<p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
+      )}</select></label></div>${paydayFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label>${!accountSummary(data).configured && !data.transactions.length && !data.transfers.length ? '<label class="checkbox"><input type="checkbox" name="cashStartingBalance" checked> This is also my current Cash balance</label>' : ""}<p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
     { subtitle: "YOUR SPENDING PLAN", submitLabel: "Save my plan" },
   );
+  updatePaydayFields(d);
   d.querySelector("#use-account-funds")?.addEventListener("click", () => {
     d.querySelector("[name=budget]").value = Math.max(
       0,
@@ -821,6 +824,13 @@ function budgetDialog() {
 function saveBudget(f) {
   const budget =
     Number(f.get("budget")) === 0 ? 0 : parseAmount(f.get("budget"));
+  const schedule = {
+    cycle: f.get("cycle"),
+    budgetStart: f.get("budgetStart"),
+    nextPayday: f.get("nextPayday"),
+    repeatPayday: f.has("repeatPayday"),
+  };
+  validatePayday(schedule);
   change((next) => {
     if (f.has("cashStartingBalance")) {
       const cash = next.accounts.find((a) => a.type === "cash");
@@ -833,7 +843,7 @@ function saveBudget(f) {
       ...next.settings,
       budget,
       currency: f.get("currency"),
-      cycle: f.get("cycle"),
+      ...schedule,
       rollover: f.has("rollover"),
     };
   }, "Spending plan saved");
@@ -1415,3 +1425,8 @@ if (
   !storageProblem
 )
   entryDialog();
+
+document.addEventListener("change", (event) => {
+  if (event.target.matches('select[name="cycle"]'))
+    updatePaydayFields(event.target.closest("form"));
+});
