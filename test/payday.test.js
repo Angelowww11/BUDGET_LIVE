@@ -36,7 +36,7 @@ test("payday period crosses month end and includes only its expenses", () => {
   assert.equal(s.spent, 200);
   assert.equal(s.todaySpent, 100);
   assert.equal(s.remainingDays, 18);
-  assert.equal(s.safePerDay, 7900 / 18);
+  assert.equal(s.safePerDay, 7800 / 18);
 });
 test("one-off plan ends at payday without granting another daily allowance", () => {
   const s = budgetSummary(settings, [], new Date(2026, 10, 19, 12));

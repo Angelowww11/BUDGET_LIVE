@@ -213,16 +213,13 @@ export function budgetSummary(
   }
   const total = baseBudget + carryover;
   const daily = days ? total / days : 0;
-  const beforeToday = Math.max(
-    0,
-    Math.min(total - spent + todaySpent, availableBalance + todaySpent),
-  );
+  const remaining = Math.max(0, total - spent);
+  const dailyPool = Math.max(0, Math.min(remaining, availableBalance));
   const safePerDay = !active
     ? 0
     : settings.rollover === false
-      ? Math.min(daily, beforeToday)
-      : beforeToday / Math.max(1, remainingDays);
-  const remaining = Math.max(0, total - spent);
+      ? Math.min(daily, dailyPool)
+      : dailyPool / Math.max(1, remainingDays);
   const leftToday = Math.max(0, Math.min(remaining, safePerDay - todaySpent));
   return {
     start,
@@ -236,6 +233,7 @@ export function budgetSummary(
     spent,
     todaySpent,
     safePerDay,
+    dailyPool,
     leftToday,
     baseDaily: daily,
     remaining,

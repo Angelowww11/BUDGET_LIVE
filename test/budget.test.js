@@ -126,3 +126,27 @@ test("daily spending adjusts when the available account balance changes", () => 
   assert.equal(lower.safePerDay.toFixed(2), "129.03");
   assert.equal(lower.remaining, 8000);
 });
+test("paid bills recalculate the remaining daily amount from money actually left", () => {
+  const plan = {
+    budget: 5708.55,
+    cycle: "payday",
+    budgetStart: "2026-10-31",
+    nextPayday: "2026-11-19",
+    rollover: true,
+  };
+  const today = new Date(2026, 10, 1, 12);
+  const paidBill = [
+    {
+      type: "expense",
+      amount: 1619,
+      date: today.toISOString(),
+      category: "Bills",
+    },
+  ];
+  const summary = budgetSummary(plan, paidBill, today, 4089.55);
+  assert.equal(summary.remaining, 4089.55);
+  assert.equal(summary.remainingDays, 18);
+  assert.equal(summary.dailyPool, 4089.55);
+  assert.equal(summary.safePerDay.toFixed(2), "227.20");
+  assert.equal(summary.leftToday, 0);
+});
