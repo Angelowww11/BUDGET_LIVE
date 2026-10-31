@@ -1047,6 +1047,45 @@ function restoreDialog(next) {
   });
 }
 
+function resetDialog() {
+  const d = modal(
+    "Reset all your data?",
+    `<p>This sets your plan and every account balance to zero and removes transactions, bills, goals, and preferences from this device. A backup will download first.</p><label>Type RESET to confirm<input name="confirmation" autocomplete="off" required pattern="RESET" placeholder="RESET"></label><label class="checkbox"><input type="checkbox" name="understood" required> I understand this clears all my saved data on this device.</label>`,
+    {
+      subtitle: "DOUBLE CHECK",
+      submitLabel: "Download backup & reset everything",
+    },
+  );
+  formSubmit(d, (f) => {
+    if (f.get("confirmation") !== "RESET" || !f.has("understood"))
+      throw new Error("Type RESET and check the box to continue.");
+    if (ctx.demo)
+      throw new Error("Leave the sample before resetting your data.");
+    download(
+      `daylight-before-reset-${dayKey(new Date())}.backup.json`,
+      backup(data),
+    );
+    data = save(emptyState());
+    localStorage.removeItem(RECOVERY_KEY);
+    undoState = null;
+    ctx.view = "home";
+    ctx.settingsTab = "general";
+    ctx.filters = {
+      type: "all",
+      query: "",
+      category: "",
+      method: "",
+      from: "",
+      to: "",
+      accountId: "",
+    };
+    history.replaceState(null, "", "#home");
+    d.close();
+    render();
+    notify("All data reset to zero");
+  });
+}
+
 function chooseBackup() {
   document.querySelector("#backup-input")?.remove();
   const input = document.createElement("input");
@@ -1509,6 +1548,9 @@ app.addEventListener("click", async (event) => {
       }
       case "restore-backup":
         chooseBackup();
+        break;
+      case "reset-data":
+        resetDialog();
         break;
       case "download-raw":
         download(
