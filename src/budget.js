@@ -232,7 +232,7 @@ export function budgetSummary(
   const safePerDay = !active
     ? 0
     : settings.rollover === false
-      ? Math.min(daily, dailyPool)
+      ? Math.min(daily, dailyPool / Math.max(1, remainingDays))
       : dailyPool / Math.max(1, remainingDays);
   const leftToday = Math.max(0, Math.min(remaining, safePerDay - todaySpent));
   return {

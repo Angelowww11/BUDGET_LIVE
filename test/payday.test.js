@@ -24,6 +24,18 @@ test("allowance on November 19 divides October 31 funds over 19 spending days", 
   assert.equal(s.baseDaily.toFixed(2), "421.05");
   assert.equal(dayKey(s.end), "2026-11-19");
 });
+test("fixed daily amount follows the remaining balance after spending", () => {
+  const today = new Date(2026, 10, 1, 12);
+  const s = budgetSummary(
+    { ...settings, budget: 7327.55, budgetStart: "2026-11-01" },
+    [{ type: "expense", amount: 2619, date: today.toISOString() }],
+    today,
+    4708.55,
+  );
+  assert.equal(s.remaining, 4708.55);
+  assert.equal(s.remainingDays, 18);
+  assert.equal(s.safePerDay.toFixed(2), "261.59");
+});
 test("payday period crosses month end and includes only its expenses", () => {
   const tx = ["2026-10-30", "2026-10-31", "2026-11-01", "2026-11-19"].map(
     (date) => ({ type: "expense", amount: 100, date: date + "T12:00:00" }),
@@ -181,7 +193,13 @@ test("salary payday validation requires two different valid days", () => {
       }),
     /1 through 31/i,
   );
-  assert.equal(salaryBounds({ ...salarySettings, salary: { ...salarySettings.salary, enabled: false } }), null);
+  assert.equal(
+    salaryBounds({
+      ...salarySettings,
+      salary: { ...salarySettings.salary, enabled: false },
+    }),
+    null,
+  );
 });
 test("salary schedule survives a private backup", () => {
   const data = emptyState();
