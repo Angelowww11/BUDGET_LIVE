@@ -3382,6 +3382,7 @@ input[type="radio"] {
     letter-spacing: -0.7px;
   }
   .plan-banner > .button {
+    flex: 0 0 calc(100% - 61px);
     margin-left: 61px;
     min-height: 36px;
     font-size: 10px;
