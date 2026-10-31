@@ -183,12 +183,26 @@ export function budgetSummary(
   const todaySpent = transactions
     .filter((t) => t.type === "expense" && dayKey(t.date) === dayKey(today))
     .reduce((sum, t) => sum + Number(t.amount), 0);
-  const baseBudget = Math.max(0, Number(settings.budget) || 0);
+  const fromAccounts = settings.budgetSource === "accounts";
+  const baseBudget = fromAccounts
+    ? budgetFromAvailableBalance(
+        settings,
+        transactions,
+        availableBalance,
+        today,
+      )
+    : Math.max(0, Number(settings.budget) || 0);
   let carryover =
-    settings.cycle === "monthly" && settings.carryover !== false
+    !fromAccounts &&
+    settings.cycle === "monthly" &&
+    settings.carryover !== false
       ? Math.max(0, Number(settings.carryoverOpening) || 0)
       : 0;
-  if (settings.cycle === "monthly" && settings.carryover !== false) {
+  if (
+    !fromAccounts &&
+    settings.cycle === "monthly" &&
+    settings.carryover !== false
+  ) {
     const anchor = budgetDate(`${settings.carryoverFrom}-01`);
     if (anchor && anchor < start) {
       const month = new Date(anchor);
@@ -239,4 +253,23 @@ export function budgetSummary(
     remaining,
     percent: safePerDay ? todaySpent / safePerDay : todaySpent ? 2 : 0,
   };
+}
+
+// A plan is the period's starting limit. Include expenses already recorded so
+// its remaining amount equals the money available in spending accounts.
+export function budgetFromAvailableBalance(
+  settings,
+  transactions,
+  availableBalance,
+  today = new Date(),
+) {
+  const spent = budgetSummary(
+    { ...settings, budgetSource: "manual", carryover: false },
+    transactions,
+    today,
+  ).spent;
+  const available = Number.isFinite(availableBalance)
+    ? Math.max(0, availableBalance)
+    : 0;
+  return Math.round((available + spent) * 100) / 100;
 }

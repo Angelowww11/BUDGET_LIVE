@@ -150,3 +150,19 @@ test("paid bills recalculate the remaining daily amount from money actually left
   assert.equal(summary.safePerDay.toFixed(2), "227.20");
   assert.equal(summary.leftToday, 0);
 });
+test("an account-linked plan carries the real balance into the next month once", () => {
+  const plan = {
+    budget: 5000,
+    budgetSource: "accounts",
+    cycle: "monthly",
+    rollover: true,
+    carryover: true,
+    carryoverFrom: "2026-10",
+    carryoverOpening: 5000,
+  };
+  const summary = budgetSummary(plan, [], new Date(2026, 10, 1, 12), 5000);
+  assert.equal(summary.total, 5000);
+  assert.equal(summary.remaining, 5000);
+  assert.equal(summary.carryover, 0);
+  assert.equal(summary.safePerDay.toFixed(2), "166.67");
+});

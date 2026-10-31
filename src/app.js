@@ -4,6 +4,7 @@ import "@fontsource-variable/manrope";
 import "./app.css";
 import {
   budgetSummary,
+  budgetFromAvailableBalance,
   dayKey,
   validatePayday,
   validateSalary,
@@ -265,12 +266,17 @@ function accountDialog(account = {}) {
       )
       .join(
         "",
-      )}</select></label><label>Current balance <span class="optional">${esc(data.settings.currency)}</span><input name="currentBalance" inputmode="decimal" required value="${current}"></label><p class="small muted">Enter the balance you have now. This corrects the starting balance behind your existing entries; it does not create extra income.</p><label class="switch-label"><span><strong>Available for everyday spending</strong><small>Turn off for savings or money you want to set aside.</small></span><input name="includeInSpending" type="checkbox" role="switch" ${account.includeInSpending !== false ? "checked" : ""}></label>${account.id ? '<button class="button danger small" type="button" id="delete-account">Delete unused account</button>' : ""}`,
+      )}</select></label><label>Current balance <span class="optional">${esc(data.settings.currency)}</span><input name="currentBalance" inputmode="decimal" required value="${current}"></label><p class="small muted">Enter the balance you actually have now. This corrects the starting amount behind your entries without creating income.</p>${account.id && Number(account.openingBalance) !== 0 ? '<button type="button" class="text-button" id="clear-starting-balance">Remove starting amount already recorded as income</button>' : ""}<label class="switch-label"><span><strong>Available for everyday spending</strong><small>Turn off for savings or money you want to set aside.</small></span><input name="includeInSpending" type="checkbox" role="switch" ${account.includeInSpending !== false ? "checked" : ""}></label>${account.id ? '<button class="button danger small" type="button" id="delete-account">Delete unused account</button>' : ""}`,
     { subtitle: "YOUR ACCOUNTS", submitLabel: "Save account" },
   );
   d.querySelector('[name="accountType"]').addEventListener("change", (e) => {
     d.querySelector('[name="includeInSpending"]').checked =
       e.target.value !== "savings";
+  });
+  d.querySelector("#clear-starting-balance")?.addEventListener("click", () => {
+    d.querySelector('[name="currentBalance"]').value = round(
+      current - Number(account.openingBalance || 0),
+    ).toFixed(2);
   });
   d.querySelector("#delete-account")?.addEventListener("click", () => {
     try {
@@ -803,7 +809,7 @@ function categoryDialog(
 function budgetDialog() {
   const d = modal(
     "Give your spending a plan.",
-    `<label>Available to spend<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budget || Math.max(0, accountSummary(data).spendable) || "")}" placeholder="8000"></label>${accountSummary(data).configured ? '<button type="button" class="text-button" id="use-account-funds">Use available spending-account balance</button>' : ""}<div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
+    `<label>Plan for this period<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budgetSource === "accounts" ? budgetFromAvailableBalance(data.settings, data.transactions, accountSummary(data).spendable) : data.settings.budget || "")}" placeholder="8000"></label>${data.settings.budgetSource === "accounts" ? '<input type="hidden" name="useAccountFunds" value="1"><p class="small muted">Following your spending accounts. Income, expenses, and deletions update this plan automatically.</p>' : ""}${accountSummary(data).spendable > 0 ? '<button type="button" class="text-button" id="use-account-funds">Set plan from money left in accounts</button>' : ""}<div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
       ["monthly", "Monthly"],
       ["payday", "Until next allowance / income"],
       ["salary", "Twice monthly (salary dates)"],
@@ -816,24 +822,46 @@ function budgetDialog() {
       )
       .join(
         "",
-      )}</select></label></div>${paydayFields(data.settings)}${salaryFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label>${!accountSummary(data).configured && !data.transactions.length && !data.transfers.length ? '<label class="checkbox"><input type="checkbox" name="cashStartingBalance" checked> This is also my current Cash balance</label>' : ""}<p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
+      )}</select></label></div>${paydayFields(data.settings)}${salaryFields(data.settings)}<label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="small muted">The plan sets a spending limit. It does not add money to an account. Record money received as income; set any money you already had in Accounts.</p>`,
     { subtitle: "YOUR SPENDING PLAN", submitLabel: "Save my plan" },
   );
   updatePaydayFields(d);
-  d.querySelector("#use-account-funds")?.addEventListener("click", () => {
-    d.querySelector("[name=budget]").value = Math.max(
-      0,
-      accountSummary(data).spendable,
-    ).toFixed(2);
-  });
+  d.querySelector("#use-account-funds")?.addEventListener("click", () =>
+    fillAvailableBudget(d.querySelector("form")),
+  );
   formSubmit(d, (f) => {
     saveBudget(f);
     d.close();
   });
 }
+function fillAvailableBudget(form) {
+  const balance = Math.max(0, accountSummary(data).spendable);
+  form.elements.budget.value = budgetFromAvailableBalance(
+    { ...data.settings, cycle: form.elements.cycle.value },
+    data.transactions,
+    balance,
+  ).toFixed(2);
+  let marker = form.querySelector('[name="useAccountFunds"]');
+  if (!marker) {
+    marker = document.createElement("input");
+    marker.type = "hidden";
+    marker.name = "useAccountFunds";
+    form.append(marker);
+  }
+  const carryover = form.elements.carryover;
+  if (carryover) {
+    carryover.checked = false;
+    carryover.disabled = true;
+  }
+}
+document.addEventListener("input", (event) => {
+  if (event.target.matches('input[name="budget"]')) {
+    event.target.form?.querySelector('[name="useAccountFunds"]')?.remove();
+    const carryover = event.target.form?.elements.carryover;
+    if (carryover) carryover.disabled = false;
+  }
+});
 function saveBudget(f) {
-  const budget =
-    Number(f.get("budget")) === 0 ? 0 : parseAmount(f.get("budget"));
   const cycle = f.get("cycle");
   const salary =
     cycle === "salary"
@@ -853,27 +881,36 @@ function saveBudget(f) {
     ...(salary ? { salary } : {}),
   };
   validatePayday(schedule);
+  const useAccountFunds = f.has("useAccountFunds");
+  const budget = useAccountFunds
+    ? budgetFromAvailableBalance(
+        { ...data.settings, ...schedule },
+        data.transactions,
+        accountSummary(data).spendable,
+      )
+    : Number(f.get("budget")) === 0
+      ? 0
+      : parseAmount(f.get("budget"));
   const carryoverOpening =
+    !useAccountFunds &&
     data.settings.cycle === "monthly" &&
     data.settings.budget > 0 &&
     data.settings.carryover !== false
       ? budgetSummary(data.settings, data.transactions).carryover
       : 0;
   change((next) => {
-    if (f.has("cashStartingBalance")) {
-      const cash = next.accounts.find((a) => a.type === "cash");
-      if (cash) {
-        cash.openingBalance = budget;
-        cash.configured = true;
-      }
-    }
     next.settings = {
       ...next.settings,
       budget,
+      budgetSource: useAccountFunds ? "accounts" : "manual",
       currency: f.get("currency"),
       ...schedule,
       rollover: f.has("rollover"),
-      carryover: f.has("carryover"),
+      carryover: useAccountFunds
+        ? false
+        : cycle === "monthly"
+          ? f.has("carryover")
+          : next.settings.carryover,
       carryoverFrom: monthKey(new Date()),
       carryoverOpening,
     };
@@ -1561,6 +1598,10 @@ app.addEventListener("submit", (e) => {
   } catch (error) {
     e.target.querySelector(".form-error").textContent = error.message;
   }
+});
+app.addEventListener("click", (e) => {
+  if (e.target.closest("#use-account-funds"))
+    fillAvailableBudget(e.target.closest("form"));
 });
 window.addEventListener("online", render);
 window.addEventListener("offline", render);

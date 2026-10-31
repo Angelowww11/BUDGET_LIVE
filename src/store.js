@@ -51,6 +51,7 @@ export function emptyState() {
     version: 1,
     settings: {
       budget: 0,
+      budgetSource: "manual",
       currency: "PHP",
       cycle: "monthly",
       rollover: true,
@@ -166,6 +167,8 @@ export function normalize(value) {
   )
     throw new Error("The budget amount is invalid.");
   next.settings.budget = Number(next.settings.budget);
+  if (!["manual", "accounts"].includes(next.settings.budgetSource))
+    next.settings.budgetSource = "manual";
   try {
     new Intl.NumberFormat("en", {
       style: "currency",

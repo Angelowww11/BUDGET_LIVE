@@ -1,7 +1,7 @@
 import { dayKey } from "./budget.js";
 import { esc } from "./ui.js";
 export function carryoverFields(settings) {
-  return `<label class="switch-label carryover-fields" ${settings.cycle === "monthly" ? "" : "hidden"}><span><strong>Carry unused budget forward</strong><small>Money left at month end adds to next month’s spending plan.</small></span><input type="checkbox" role="switch" name="carryover" ${settings.carryover !== false ? "checked" : ""}></label>`;
+  return `<label class="switch-label carryover-fields" ${settings.cycle === "monthly" ? "" : "hidden"}><span><strong>Carry unused budget forward</strong><small>Money left at month end adds to next month’s spending plan. Account balances carry forward on their own.</small></span><input type="checkbox" role="switch" name="carryover" ${settings.carryover !== false && settings.budgetSource !== "accounts" ? "checked" : ""} ${settings.budgetSource === "accounts" ? "disabled" : ""}></label>`;
 }
 
 export function paydayFields(settings) {

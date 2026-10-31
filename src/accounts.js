@@ -88,7 +88,10 @@ export function accountSummary(data, asOf = new Date()) {
         .filter((a) => !a.includeInSpending)
         .reduce((n, a) => n + a.balance, 0),
     ),
-    configured: accounts.some((a) => a.configured || a.openingBalance !== 0),
+    configured:
+      accounts.some((a) => a.configured || a.openingBalance !== 0) ||
+      data.transactions.length > 0 ||
+      data.transfers.length > 0,
   };
 }
 
