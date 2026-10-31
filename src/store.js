@@ -1,5 +1,5 @@
 const KEY='daylight-budget-v1';
-const defaults={version:1,settings:{budget:0,currency:'PHP',cycle:'monthly',rollover:true,theme:'blue'},transactions:[],categories:['Food','Transport','Bills','Shopping','Health','Entertainment','Groceries','Other'],templates:[],goals:[]};
+const defaults={version:1,settings:{budget:0,currency:'PHP',cycle:'monthly',rollover:true,theme:'green'},transactions:[],categories:['Food','Transport','Bills','Shopping','Health','Entertainment','Groceries','Other'],templates:[],goals:[]};
 export function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return structuredClone(defaults);const data=JSON.parse(raw);return {...structuredClone(defaults),...data,settings:{...defaults.settings,...data.settings},transactions:Array.isArray(data.transactions)?data.transactions:[],categories:Array.isArray(data.categories)?data.categories:defaults.categories,templates:Array.isArray(data.templates)?data.templates:[],goals:Array.isArray(data.goals)?data.goals:[]};}catch{return structuredClone(defaults)}}
 export function save(data){localStorage.setItem(KEY,JSON.stringify(data));}
 export function backup(data){return JSON.stringify({app:'daylight-budget',exportedAt:new Date().toISOString(),data},null,2)}

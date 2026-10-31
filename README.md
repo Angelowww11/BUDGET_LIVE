@@ -28,3 +28,5 @@ Create a new GitHub repository, push this folder to its `main` branch, then set 
 Includes onboarding via budget setup, daily allowance and rollover, expense and income entry, editing and deleting, searchable activity, quick add, summary insights, savings goals, CSV export, and JSON backup/restore. Advanced items in the attached product brief such as receipt images, biometrics, recurring reminders, wallets, and bills are not implemented in this version. Browser storage cannot guarantee recovery if the browser clears data; backups are essential.
 
 The **More** screen includes six saved color themes: Ocean, Mocha, Midnight, Blush, Sunshine, and Sage. Theme changes use the existing browser storage key, so updates retain both the theme and financial records.
+
+The transaction screens use original SVG symbols drawn for each expense and income category. The entry form offers a visual category picker, and activity is grouped by date with income, expense, and net totals for the current month. New users start with a warm Sage palette; existing theme choices remain saved.
