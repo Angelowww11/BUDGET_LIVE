@@ -133,6 +133,9 @@ export function homeView(ctx) {
   const todayEntries = data.transactions
     .filter((t) => t.type === "expense" && dayKey(t.date) === today)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const recentIncome = data.transactions
+    .filter((t) => t.type === "income" && new Date(t.date) <= now)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
   const pairs = categoryTotals(todayEntries),
     setup = s.total === 0;
   const salary = salaryBounds(data.settings),
@@ -182,6 +185,7 @@ export function homeView(ctx) {
   }</section>
   <section class="panel quick-panel">${panelHead("Your everyday shortcuts", "The usuals, without the extra taps.", button("New shortcut", "add-template", "plus", "text-button"))}<div class="shortcut-grid">${data.templates.length ? data.templates.map((t) => `<div class="shortcut"><button class="shortcut-log" data-action="quick-add" data-id="${esc(t.id)}">${categoryBadge(data, t.category)}<span><strong>${esc(t.name || t.category)}</strong><small>${money(t.amount, c)}</small></span></button>${iconButton(`Edit ${t.name || t.category} shortcut`, "edit-template", "dots-three", `data-id="${esc(t.id)}"`)}</div>`).join("") : `<button class="shortcut-placeholder" data-action="add-template">${icon("bookmark-simple")}<span>Save your coffee, commute, or lunch.<small>One tap next time.</small></span>${icon("plus")}</button>`}</div></section>
   <section class="panel">${panelHead("Your week, at a glance", "Tap any day to open its entries.", button("Week view", "week-activity", "arrow-right", "text-button"))}${weekChart(data)}</section>
+  <section class="panel">${panelHead("Money coming in", `${money(m.income, c)} received this month`, button("All income", "view-activity", "arrow-right", "text-button"))}${recentIncome.length ? transactionList(data, recentIncome, { limit: 3, compact: true }) : empty("No income recorded yet", "Add an allowance, salary, or other money received.", "arrow-down-left", "add-entry", "Add income")}</section>
   </div><aside class="dashboard-side" aria-label="Accounts and budget summary">${accountsPanel(data)}
   <section class="panel period-mini-panel">${panelHead(`This ${cycleName}’s budget`)}${budgetRing(data, s)}<div class="key-value"><span>Starting budget</span><strong>${money(s.total, c)}</strong></div><div class="key-value"><span>Spent so far</span><strong>${money(s.spent, c)}</strong></div><div class="key-value"><span>Still available</span><strong>${money(s.remaining, c)}</strong></div><div class="panel-note">${icon("calendar-dots")}<span>${money(s.baseDaily, c)} × ${s.days} days in this period.</span></div></section>
   <section class="panel cashflow-panel">${panelHead("This month’s flow")}<div class="flow-item"><span class="flow-icon income">${icon("arrow-down-left")}</span><span>Money in</span><strong>${money(m.income, c)}</strong></div><div class="flow-item"><span class="flow-icon expense">${icon("arrow-up-right")}</span><span>Money out</span><strong>${money(m.expense, c)}</strong></div><div class="key-value flow-net"><span>Net this month</span><strong>${money(m.net, c)}</strong></div></section>

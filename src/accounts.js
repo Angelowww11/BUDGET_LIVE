@@ -13,6 +13,8 @@ export function initialAccounts(value = {}) {
     "cash",
     "card",
     "savings",
+    "bank",
+    "ewallet",
     ...(value.transactions || []).map((t) => t.paymentMethod),
     ...(value.templates || []).map((t) => t.paymentMethod),
     ...(value.bills || []).map((t) => t.paymentMethod),
