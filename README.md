@@ -14,7 +14,7 @@ Run `npm test` for daily budget and rollover checks and `npm run build` to verif
 ## Privacy and updates
 
 - Records are saved under the stable `daylight-budget-v1` browser storage key. Code deployments do not clear it.
-- There is no backend, account, analytics, or network request for personal records. The font may load from Google Fonts; a system font is used if offline.
+- There is no backend, account, analytics, or network request for personal records.
 - Browser storage is tied to the site origin. Changing the GitHub Pages URL, clearing site data, private browsing, or moving to another device requires a JSON backup and restore.
 - Download a JSON backup from **More** before changing devices or the site URL. Store that file somewhere private. CSV export is available for analysis.
 - Never commit personal backup or CSV files. `.gitignore` excludes them, but check commits before publishing.
