@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   advanceDueDate,
+  nextDueDateAfterPayment,
+  paidThisMonth,
   nextDueDateForDay,
   parseAmount,
   filterTransactions,
@@ -15,6 +17,42 @@ test("monthly recurring dates clamp and return to the original day", () => {
   assert.equal(advanceDueDate("2024-02-29", "yearly", 29), "2025-02-28");
   assert.equal(advanceDueDate("2026-10-31", "weekly"), "2026-11-07");
   assert.equal(advanceDueDate("2026-10-31", "once"), null);
+});
+test("an overdue bill paid today advances to its next real due date", () => {
+  const paidAt = new Date(2026, 10, 1, 12);
+  assert.equal(
+    nextDueDateAfterPayment(
+      { dueDate: "2026-08-31", frequency: "monthly", anchorDay: 31 },
+      paidAt,
+    ),
+    "2026-11-30",
+  );
+  assert.equal(
+    nextDueDateAfterPayment(
+      { dueDate: "2026-10-25", frequency: "weekly" },
+      paidAt,
+    ),
+    "2026-11-08",
+  );
+});
+test("an old income entry cannot mark an expense bill paid", () => {
+  const bill = { id: "bill-1", type: "expense", frequency: "monthly" };
+  const now = new Date(2026, 10, 1, 12);
+  const oldIncome = [
+    { recurringId: bill.id, type: "income", date: now.toISOString() },
+  ];
+  assert.equal(paidThisMonth(oldIncome, bill, now), false);
+  assert.equal(
+    paidThisMonth(
+      [
+        ...oldIncome,
+        { recurringId: bill.id, type: "expense", date: now.toISOString() },
+      ],
+      bill,
+      now,
+    ),
+    true,
+  );
 });
 test("amount entry handles commas, cents, and invalid values", () => {
   assert.equal(parseAmount("1,250.50"), 1250.5);

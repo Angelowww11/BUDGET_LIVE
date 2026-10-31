@@ -34,6 +34,7 @@ import {
   shiftMonth,
   localDate,
   advanceDueDate,
+  nextDueDateAfterPayment,
   nextDueDateForDay,
   paidThisMonth,
 } from "./model.js";
@@ -1363,12 +1364,14 @@ app.addEventListener("click", async (event) => {
               tags: [],
               recurringId: b.id,
             });
-            const target = next.bills.find((b) => b.id === id),
-              nextDate = advanceDueDate(b.dueDate, b.frequency, b.anchorDay);
+            const target = next.bills.find((b) => b.id === id);
+            const nextDate = nextDueDateAfterPayment(b);
             if (nextDate) target.dueDate = nextDate;
             else target.completed = true;
           },
-          b.type === "income" ? "Income received and logged" : "Payment logged",
+          b.type === "income"
+            ? "Income received and logged"
+            : "Bill paid and recorded as an expense",
         );
         lastPayments.set(id, Date.now());
         break;
