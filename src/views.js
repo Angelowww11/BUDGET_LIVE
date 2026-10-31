@@ -1,6 +1,7 @@
 import { budgetSummary, dayKey } from "./budget.js";
 import { categoryNames, categoryMeta, categoryBadge } from "./categories.js";
 import { icon } from "./icons.js";
+import { isDarkTheme } from "./appearance.js";
 import {
   accountsPanel,
   accountsView,
@@ -343,7 +344,7 @@ export function insightsView(ctx) {
 
 export const themes = [
   ["green", "Sage", "#346b58", "#e4eee7"],
-  ["blue", "Ocean", "#496c9c", "#e3ebf5"],
+  ["blue", "Blue", "#315ed5", "#e5edff"],
   ["brown", "Mocha", "#805a43", "#ede2d6"],
   ["pink", "Blush", "#ae597d", "#f8e2eb"],
   ["yellow", "Sunshine", "#8c691b", "#fbebac"],
@@ -353,6 +354,8 @@ export const themes = [
   ["teal", "Lagoon", "#287b7b", "#dceeee"],
   ["dark", "Dark", "#a7c9ba", "#24322e"],
   ["night", "Navy night", "#b1bfec", "#242b43"],
+  ["black", "Black", "#ececf2", "#101012"],
+  ["blueblack", "Blue & Black", "#93b5ff", "#101a30"],
 ];
 
 export function settingsView(ctx) {
@@ -396,7 +399,7 @@ export function settingsView(ctx) {
       .join(
         "",
       )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
-  return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(["dark", "night"].includes(data.settings.theme) ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${["dark", "night"].includes(data.settings.theme) ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${["dark", "night"].includes(data.settings.theme)}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
+  return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(isDarkTheme(data.settings.theme) ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${isDarkTheme(data.settings.theme) ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${isDarkTheme(data.settings.theme)}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
     ["general", "Spending plan", "wallet"],
     ["accounts", "Accounts", "credit-card"],
     ["appearance", "Themes", "sun"],

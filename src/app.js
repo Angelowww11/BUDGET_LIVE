@@ -13,6 +13,7 @@ import {
   RECOVERY_KEY,
 } from "./store.js";
 import { icon } from "./icons.js";
+import { isDarkTheme } from "./appearance.js";
 import {
   categoryNames,
   categoryMeta,
@@ -121,7 +122,7 @@ function render() {
     stats: insightsView,
     settings: settingsView,
   }[ctx.view];
-  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="Daylight overview">${logo}<span>daylight<small>A LITTLE MORE PEACE OF MIND</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take Daylight with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>daylight</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${["dark", "night"].includes(data.settings.theme) ? "Switch to light mode" : "Switch to dark mode"}" title="${["dark", "night"].includes(data.settings.theme) ? "Switch to light mode" : "Switch to dark mode"}">${icon(["dark", "night"].includes(data.settings.theme) ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>Made for the everyday.</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
+  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="Daylight overview">${logo}<span>daylight<small>A LITTLE MORE PEACE OF MIND</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take Daylight with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>daylight</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${isDarkTheme(data.settings.theme) ? "Switch to light mode" : "Switch to dark mode"}" title="${isDarkTheme(data.settings.theme) ? "Switch to light mode" : "Switch to dark mode"}">${icon(isDarkTheme(data.settings.theme) ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>Made for the everyday.</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
 }
 
 function renderRecovery() {
@@ -979,11 +980,12 @@ app.addEventListener("click", async (event) => {
       case "toggle-dark":
         change(
           (next) => {
-            if (["dark", "night"].includes(next.settings.theme)) {
+            if (isDarkTheme(next.settings.theme)) {
+              next.settings.lastDarkTheme = next.settings.theme;
               next.settings.theme = next.settings.lastLightTheme || "green";
             } else {
               next.settings.lastLightTheme = next.settings.theme;
-              next.settings.theme = "dark";
+              next.settings.theme = next.settings.lastDarkTheme || "dark";
             }
           },
           "Appearance updated",
@@ -1211,8 +1213,8 @@ app.addEventListener("click", async (event) => {
         change(
           (next) => {
             next.settings.theme = value;
-            if (!["dark", "night"].includes(value))
-              next.settings.lastLightTheme = value;
+            if (!isDarkTheme(value)) next.settings.lastLightTheme = value;
+            else next.settings.lastDarkTheme = value;
           },
           "Theme saved",
           { undo: false },

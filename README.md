@@ -25,7 +25,7 @@ This is an installable web app with its own home-screen icon and standalone wind
 - Savings goals with target dates, suggested weekly contributions, and a contribution form.
 - Bills and recurring expenses/income with explicit payment confirmation and correct next-date handling.
 - Monthly category breakdown, savings rate, largest expense, tracking streak, and cumulative spending chart. The budget pace comparison is shown only for monthly spending plans.
-- Eleven complete color themes, including Dark and Navy night, plus a visible moon/sun toggle and a labeled dark-mode switch. Custom category icons/colors remain available.
+- Thirteen complete color themes, including Blue, Black, Blue & Black, Dark, and Navy night, plus a visible moon/sun toggle and a labeled dark-mode switch. Custom category icons/colors remain available.
 - Cash, Card, Savings, Bank, and E-wallet account types, editable current balances, account-specific records, and transfers that do not count as expenses or income.
 - JSON backup/restore, CSV export, a previous on-device recovery copy, and storage-conflict protection.
 - Sample preview mode that does not overwrite personal records.
