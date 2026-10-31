@@ -9,6 +9,7 @@ import { monthTotals } from "../src/model.js";
 test("editing an expense updates the budget, account, and monthly flow together", () => {
   const data = emptyState();
   data.settings.budget = 8000;
+  data.settings.carryover = false;
   data.accounts[0].openingBalance = 8000;
   data.transactions = [
     {
