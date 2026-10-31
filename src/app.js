@@ -1,7 +1,7 @@
 import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
 import "./app.css";
-import { budgetSummary, dayKey } from "./budget.js";
+import { dayKey } from "./budget.js";
 import {
   load,
   save,
@@ -27,7 +27,6 @@ import {
   shiftMonth,
   localDate,
   advanceDueDate,
-  filterTransactions,
 } from "./model.js";
 import {
   esc,
@@ -36,7 +35,6 @@ import {
   button,
   iconButton,
   empty,
-  methodLabels,
   frequencyLabels,
   logo,
 } from "./ui.js";
@@ -50,6 +48,15 @@ import {
 } from "./views.js";
 import { demoState } from "./demo.js";
 import { pwaState, initPWA, installApp, updateApp } from "./pwa.js";
+import {
+  accountTypes,
+  accountBalances,
+  accountSummary,
+  transactionAccountId,
+  openingForCurrentBalance,
+  methodForAccount,
+} from "./accounts.js";
+import { journalItems, shiftJournalDate } from "./journal.js";
 
 const app = document.querySelector("#app");
 let data,
@@ -70,6 +77,8 @@ const ctx = {
     ? location.hash.slice(1)
     : "home",
   month: monthKey(new Date()),
+  activityPeriod: "day",
+  activityDate: dayKey(new Date()),
   planTab: "limits",
   settingsTab: "general",
   filters: {
@@ -79,7 +88,7 @@ const ctx = {
     method: "",
     from: "",
     to: "",
-    allTime: false,
+    accountId: "",
   },
   showFilters: false,
   demo: false,
@@ -112,7 +121,7 @@ function render() {
     stats: insightsView,
     settings: settingsView,
   }[ctx.view];
-  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="Daylight overview">${logo}<span>daylight<small>A LITTLE MORE PEACE OF MIND</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take Daylight with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>daylight</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}${iconButton("Data and privacy", "view-data", "shield-check")}</div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>Made for the everyday.</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
+  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="Daylight overview">${logo}<span>daylight<small>A LITTLE MORE PEACE OF MIND</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take Daylight with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>daylight</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${["dark", "night"].includes(data.settings.theme) ? "Switch to light mode" : "Switch to dark mode"}" title="${["dark", "night"].includes(data.settings.theme) ? "Switch to light mode" : "Switch to dark mode"}">${icon(["dark", "night"].includes(data.settings.theme) ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>Made for the everyday.</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
 }
 
 function renderRecovery() {
@@ -218,13 +227,138 @@ function categorySelect(type = "expense", selected = "") {
   ];
   return `<select name="category" required>${names.map((name) => `<option ${name === selected ? "selected" : ""}>${esc(name)}</option>`).join("")}</select>`;
 }
-function paymentSelect(selected = "cash") {
-  return `<select name="paymentMethod">${Object.entries(methodLabels)
+function accountSelect(selected = "") {
+  return `<select name="accountId" required aria-label="Account">${accountBalances(
+    data,
+  )
     .map(
-      ([v, n]) =>
-        `<option value="${v}" ${v === selected ? "selected" : ""}>${n}</option>`,
+      (a) =>
+        `<option value="${esc(a.id)}" ${a.id === selected ? "selected" : ""}>${esc(a.name)} · ${money(a.balance, data.settings.currency)}</option>`,
     )
     .join("")}</select>`;
+}
+
+function accountDialog(account = {}) {
+  const current = account.id
+    ? accountBalances(data).find((a) => a.id === account.id)?.balance || 0
+    : 0;
+  const d = modal(
+    account.id ? "This pocket of your money." : "A place for your money.",
+    `<label>Account name<input name="name" required maxlength="40" placeholder="Cash, payroll card, rainy-day fund…" value="${esc(account.name || "")}"></label><label>Account type<select name="accountType" ${account.id ? "disabled" : ""}>${Object.entries(
+      accountTypes,
+    )
+      .map(
+        ([key, meta]) =>
+          `<option value="${key}" ${key === (account.type || "cash") ? "selected" : ""}>${meta.name}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><label>Current balance <span class="optional">${esc(data.settings.currency)}</span><input name="currentBalance" inputmode="decimal" required value="${current}"></label><p class="small muted">Enter the balance you have now. This corrects the starting balance behind your existing entries; it does not create extra income.</p><label class="switch-label"><span><strong>Available for everyday spending</strong><small>Turn off for savings or money you want to set aside.</small></span><input name="includeInSpending" type="checkbox" role="switch" ${account.includeInSpending !== false ? "checked" : ""}></label>${account.id ? '<button class="button danger small" type="button" id="delete-account">Delete unused account</button>' : ""}`,
+    { subtitle: "YOUR ACCOUNTS", submitLabel: "Save account" },
+  );
+  d.querySelector('[name="accountType"]').addEventListener("change", (e) => {
+    d.querySelector('[name="includeInSpending"]').checked =
+      e.target.value !== "savings";
+  });
+  d.querySelector("#delete-account")?.addEventListener("click", () => {
+    try {
+      const used =
+        [...data.transactions, ...data.templates, ...data.bills].some(
+          (t) => transactionAccountId(data, t) === account.id,
+        ) ||
+        data.transfers.some(
+          (t) => t.fromId === account.id || t.toId === account.id,
+        );
+      if (used || Math.abs(current) > 0.005)
+        throw new Error(
+          "This account has a balance or recorded history. Keep it so those records stay accurate.",
+        );
+      if (data.accounts.length < 2)
+        throw new Error("Keep at least one account.");
+      change((next) => {
+        next.accounts = next.accounts.filter((a) => a.id !== account.id);
+      }, "Account removed");
+      d.close();
+    } catch (error) {
+      d.querySelector(".form-error").textContent = error.message;
+    }
+  });
+  formSubmit(d, (f) => {
+    const balance = Number(
+      String(f.get("currentBalance")).replace(/[,\s]/g, ""),
+    );
+    if (!Number.isFinite(balance) || Math.abs(balance) > 1e12)
+      throw new Error(
+        "Enter a valid balance. Use a minus sign for money owed.",
+      );
+    const name = String(f.get("name")).trim();
+    if (!name) throw new Error("Give the account a name.");
+    const item = {
+      ...account,
+      id: account.id || uid(),
+      name,
+      type: account.type || f.get("accountType"),
+      openingBalance: account.id
+        ? openingForCurrentBalance(data, account.id, balance)
+        : round(balance),
+      includeInSpending: f.has("includeInSpending"),
+      configured: true,
+    };
+    change((next) => {
+      if (account.id)
+        next.accounts = next.accounts.map((a) =>
+          a.id === account.id ? item : a,
+        );
+      else next.accounts.push(item);
+    }, "Account saved");
+    d.close();
+  });
+}
+
+function transferDialog() {
+  if (data.accounts.length < 2) {
+    accountDialog();
+    return;
+  }
+  const options = (selected) =>
+    data.accounts
+      .map(
+        (a) =>
+          `<option value="${esc(a.id)}" ${selected === a.id ? "selected" : ""}>${esc(a.name)}</option>`,
+      )
+      .join("");
+  const d = modal(
+    "Same money. A different pocket.",
+    `<div class="form-row"><label>From<select name="fromId">${options(data.accounts[0].id)}</select></label><label>To<select name="toId">${options(data.accounts[1].id)}</select></label></div><label>Amount<input autofocus name="amount" inputmode="decimal" required placeholder="0.00"></label><label>Date<input name="date" type="date" required value="${dayKey(new Date())}"></label><label>Note <span class="optional">optional</span><input name="note" maxlength="120" placeholder="A little for my savings"></label><p class="small muted">A transfer moves funds between accounts. Your total balance, income, spending, and daily budget do not change.</p>`,
+    { subtitle: "MOVE MONEY", submitLabel: "Save transfer" },
+  );
+  formSubmit(d, (f) => {
+    if (f.get("fromId") === f.get("toId"))
+      throw new Error("Choose two different accounts.");
+    const amount = parseAmount(f.get("amount")),
+      date = localDate(f.get("date"));
+    if (!Number.isFinite(date.getTime()))
+      throw new Error("Choose a valid date.");
+    const available = accountBalances(data, date).find(
+      (a) => a.id === f.get("fromId"),
+    );
+    if (!available) throw new Error("Choose a valid account.");
+    if (amount > available.balance + 0.005)
+      throw new Error(
+        `${available.name} has ${money(available.balance, data.settings.currency)} available. Correct its balance first or transfer a smaller amount.`,
+      );
+    change((next) => {
+      next.transfers.push({
+        id: uid(),
+        fromId: f.get("fromId"),
+        toId: f.get("toId"),
+        amount,
+        date: date.toISOString(),
+        note: String(f.get("note")).trim(),
+      });
+    }, "Money moved between accounts");
+    d.close();
+  });
 }
 
 function entryDialog(entry = {}) {
@@ -245,7 +379,7 @@ function entryDialog(entry = {}) {
       .join("");
   const d = modal(
     entry.id ? "A closer look." : "What’s the story?",
-    `${typeSwitch(type)}<label class="amount-field"><span>Amount <small>${esc(data.settings.currency)}</small></span><div><span class="amount-symbol">${esc(currency(data.settings.currency))}</span><input autofocus name="amount" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(entry.amount || "")}" required aria-label="Transaction amount"></div></label><div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div><label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details"><summary>${icon("sliders-horizontal")}Date, payment & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label><label>Paid with${paymentSelect(entry.paymentMethod)}</label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
+    `${typeSwitch(type)}<label class="entry-account-field">${icon("wallet")}<span>Account</span>${accountSelect(transactionAccountId(data, entry))}</label><label class="amount-field"><span>Amount <small>${esc(data.settings.currency)}</small></span><div><span class="amount-symbol">${esc(currency(data.settings.currency))}</span><input autofocus name="amount" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(entry.amount || "")}" required aria-label="Transaction amount"></div></label><div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div><label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details" ${entry.date && dayKey(entry.date) !== dayKey(new Date()) ? "open" : ""}><summary>${icon("sliders-horizontal")}Date & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
     {
       subtitle: entry.id ? "EDIT TRANSACTION" : "A MOMENT FOR YOUR MONEY",
       className: "entry-sheet",
@@ -277,7 +411,8 @@ function entryDialog(entry = {}) {
       amount: f.get("amount"),
       category: selected,
       note: f.get("note"),
-      paymentMethod: f.get("paymentMethod"),
+      accountId: f.get("accountId"),
+      paymentMethod: methodForAccount(data, f.get("accountId")),
       tags: String(f.get("tags"))
         .split(",")
         .map((t) => t.trim())
@@ -326,7 +461,12 @@ function entryDialog(entry = {}) {
       throw new Error("Choose a valid date.");
     const now = new Date();
     const chosen = localDate(date);
-    chosen.setHours(now.getHours(), now.getMinutes(), 0, 0);
+    chosen.setHours(
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds(),
+    );
     const item = {
       ...entry,
       id: entry.id || uid(),
@@ -334,7 +474,8 @@ function entryDialog(entry = {}) {
       amount: parseAmount(f.get("amount")),
       category: f.get("category"),
       note: String(f.get("note")).trim(),
-      paymentMethod: f.get("paymentMethod"),
+      accountId: f.get("accountId"),
+      paymentMethod: methodForAccount(data, f.get("accountId")),
       tags: String(f.get("tags"))
         .split(",")
         .map((s) => s.trim())
@@ -364,7 +505,7 @@ function entryDialog(entry = {}) {
 function templateDialog(template = {}) {
   const d = modal(
     template.id ? "Your everyday shortcut." : "Make next time easier.",
-    `<label>Name<input name="name" required maxlength="40" placeholder="Morning coffee" value="${esc(template.name || "")}"></label>${typeSwitch(template.type || "expense")}<div class="form-row"><label>Category${categorySelect(template.type || "expense", template.category)}</label><label>Amount<input name="amount" inputmode="decimal" required value="${esc(template.amount || "")}" placeholder="0.00"></label></div><label>Payment method${paymentSelect(template.paymentMethod)}</label><p class="small muted">One tap adds this entry with today’s date. You can undo it.</p>${template.id ? '<button class="button danger small" type="button" id="delete-template">Delete shortcut</button>' : ""}`,
+    `<label>Name<input name="name" required maxlength="40" placeholder="Morning coffee" value="${esc(template.name || "")}"></label>${typeSwitch(template.type || "expense")}<div class="form-row"><label>Category${categorySelect(template.type || "expense", template.category)}</label><label>Amount<input name="amount" inputmode="decimal" required value="${esc(template.amount || "")}" placeholder="0.00"></label></div><label>Account${accountSelect(transactionAccountId(data, template))}</label><p class="small muted">One tap adds this entry with today’s date. You can undo it.</p>${template.id ? '<button class="button danger small" type="button" id="delete-template">Delete shortcut</button>' : ""}`,
     { subtitle: "QUICK ADD", submitLabel: "Save shortcut" },
   );
   d.querySelectorAll('[name="type"]').forEach(
@@ -393,7 +534,8 @@ function templateDialog(template = {}) {
       type: f.get("type"),
       category: f.get("category"),
       amount: parseAmount(f.get("amount")),
-      paymentMethod: f.get("paymentMethod"),
+      accountId: f.get("accountId"),
+      paymentMethod: methodForAccount(data, f.get("accountId")),
     };
     change((next) => {
       if (template.id)
@@ -510,7 +652,7 @@ function billDialog(bill = {}) {
       )
       .join(
         "",
-      )}</select></label></div><label>Payment method${paymentSelect(bill.paymentMethod)}</label><p class="small muted">Nothing is logged automatically. Confirm a payment from Upcoming when it happens.</p>${bill.id ? '<button type="button" class="button danger small" id="delete-bill">Delete recurring entry</button>' : ""}`,
+      )}</select></label></div><label>Account${accountSelect(transactionAccountId(data, bill))}</label><p class="small muted">Nothing is logged automatically. Confirm a payment from Upcoming when it happens.</p>${bill.id ? '<button type="button" class="button danger small" id="delete-bill">Delete recurring entry</button>' : ""}`,
     { subtitle: "BILLS & RECURRING", submitLabel: "Save recurring entry" },
   );
   d.querySelectorAll('[name="type"]').forEach(
@@ -548,7 +690,8 @@ function billDialog(bill = {}) {
           ? bill.anchorDay || localDate(dueDate).getDate()
           : localDate(dueDate).getDate(),
       frequency: f.get("frequency"),
-      paymentMethod: f.get("paymentMethod"),
+      accountId: f.get("accountId"),
+      paymentMethod: methodForAccount(data, f.get("accountId")),
       completed: false,
     };
     change((next) => {
@@ -648,7 +791,7 @@ function categoryDialog(
 function budgetDialog() {
   const d = modal(
     "Give your spending a plan.",
-    `<label>Available to spend<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budget || "")}" placeholder="25000"></label><div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
+    `<label>Available to spend<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budget || Math.max(0, accountSummary(data).spendable) || "")}" placeholder="8000"></label>${accountSummary(data).configured ? '<button type="button" class="text-button" id="use-account-funds">Use available spending-account balance</button>' : ""}<div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
       ["monthly", "Monthly"],
       ["weekly", "Weekly"],
       ["biweekly", "Every 2 weeks"],
@@ -659,9 +802,15 @@ function budgetDialog() {
       )
       .join(
         "",
-      )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
+      )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Let unspent money adjust the remaining days.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label>${!accountSummary(data).configured && !data.transactions.length && !data.transfers.length ? '<label class="checkbox"><input type="checkbox" name="cashStartingBalance" checked> This is also my current Cash balance</label>' : ""}<p class="small muted">Use the money available after your fixed commitments. Logging income won’t change this amount automatically.</p>`,
     { subtitle: "YOUR SPENDING PLAN", submitLabel: "Save my plan" },
   );
+  d.querySelector("#use-account-funds")?.addEventListener("click", () => {
+    d.querySelector("[name=budget]").value = Math.max(
+      0,
+      accountSummary(data).spendable,
+    ).toFixed(2);
+  });
   formSubmit(d, (f) => {
     saveBudget(f);
     d.close();
@@ -671,6 +820,13 @@ function saveBudget(f) {
   const budget =
     Number(f.get("budget")) === 0 ? 0 : parseAmount(f.get("budget"));
   change((next) => {
+    if (f.has("cashStartingBalance")) {
+      const cash = next.accounts.find((a) => a.type === "cash");
+      if (cash) {
+        cash.openingBalance = budget;
+        cash.configured = true;
+      }
+    }
     next.settings = {
       ...next.settings,
       budget,
@@ -746,16 +902,34 @@ function updateActivityResults() {
   const { filters } = ctx;
   const q = document.querySelector("#transaction-search");
   if (q) filters.query = q.value;
-  for (const key of ["category", "method", "from", "to"]) {
+  for (const key of ["category", "method", "from", "to", "accountId"]) {
     const el = document.querySelector(`#filter-${key}`);
     if (el) filters[key] = el.value;
   }
-  const all = document.querySelector("#filter-all-time");
-  if (all) filters.allTime = all.checked;
-  const items = filterTransactions(data.transactions, {
-    ...filters,
-    month: filters.allTime ? "" : ctx.month,
-  });
+  const items = journalItems(data, ctx);
+  const income = round(
+      items
+        .filter((t) => t.type === "income")
+        .reduce((n, t) => n + Number(t.amount), 0),
+    ),
+    spent = round(
+      items
+        .filter((t) => t.type === "expense")
+        .reduce((n, t) => n + Number(t.amount), 0),
+    );
+  document.querySelector("#view-income").textContent = money(
+    income,
+    data.settings.currency,
+  );
+  document.querySelector("#view-spent").textContent = money(
+    spent,
+    data.settings.currency,
+  );
+  document.querySelector("#view-net").textContent = money(
+    income - spent,
+    data.settings.currency,
+  );
+
   document.querySelector("#transaction-results").innerHTML = items.length
     ? transactionList(data, items)
     : empty(
@@ -778,7 +952,11 @@ app.addEventListener("click", async (event) => {
         navigate(view);
         break;
       case "add-entry":
-        entryDialog();
+        entryDialog(
+          ctx.view === "transactions" && ctx.activityPeriod !== "all"
+            ? { date: localDate(ctx.activityDate).toISOString() }
+            : {},
+        );
         break;
       case "edit-entry":
         entryDialog(data.transactions.find((t) => t.id === id));
@@ -790,6 +968,56 @@ app.addEventListener("click", async (event) => {
         ctx.planTab = "bills";
         navigate("plan");
         break;
+      case "view-accounts":
+        ctx.settingsTab = "accounts";
+        navigate("settings");
+        break;
+      case "view-themes":
+        ctx.settingsTab = "appearance";
+        navigate("settings");
+        break;
+      case "toggle-dark":
+        change(
+          (next) => {
+            if (["dark", "night"].includes(next.settings.theme)) {
+              next.settings.theme = next.settings.lastLightTheme || "green";
+            } else {
+              next.settings.lastLightTheme = next.settings.theme;
+              next.settings.theme = "dark";
+            }
+          },
+          "Appearance updated",
+          { undo: false },
+        );
+        break;
+      case "add-account":
+        accountDialog();
+        break;
+      case "edit-account":
+        accountDialog(data.accounts.find((a) => a.id === id));
+        break;
+      case "transfer":
+        transferDialog();
+        break;
+      case "delete-transfer":
+        change((next) => {
+          next.transfers = next.transfers.filter((t) => t.id !== id);
+        }, "Transfer removed");
+        break;
+      case "account-activity":
+        ctx.activityPeriod = "all";
+        ctx.filters = {
+          type: "all",
+          query: "",
+          category: "",
+          method: "",
+          from: "",
+          to: "",
+          accountId: id,
+        };
+        ctx.showFilters = true;
+        navigate("transactions");
+        break;
       case "view-data":
         ctx.settingsTab = "data";
         navigate("settings");
@@ -797,6 +1025,11 @@ app.addEventListener("click", async (event) => {
       case "view-install":
         ctx.settingsTab = "install";
         navigate("settings");
+        break;
+      case "fixed-daily-limit":
+        change((next) => {
+          next.settings.rollover = false;
+        }, "Fixed daily limit enabled");
         break;
       case "budget-dialog":
         budgetDialog();
@@ -819,7 +1052,11 @@ app.addEventListener("click", async (event) => {
               category: t.category,
               note: t.name || t.note || "",
               date: new Date().toISOString(),
-              paymentMethod: t.paymentMethod || "cash",
+              accountId: transactionAccountId(data, t),
+              paymentMethod: methodForAccount(
+                data,
+                transactionAccountId(data, t),
+              ),
               tags: [],
               templateId: t.id,
             });
@@ -854,18 +1091,59 @@ app.addEventListener("click", async (event) => {
           method: "",
           from: "",
           to: "",
-          allTime: false,
         };
         render();
         break;
       case "day-activity":
-        ctx.month = date.slice(0, 7);
-        ctx.filters.from = ctx.filters.to = date;
-        ctx.showFilters = true;
+      case "today-activity":
+      case "today-category":
+      case "week-activity":
+        ctx.activityDate = date || dayKey(new Date());
+        ctx.activityPeriod = action === "week-activity" ? "week" : "day";
+        ctx.filters = {
+          type: "all",
+          query: "",
+          category: action === "today-category" ? category : "",
+          method: "",
+          from: "",
+          to: "",
+          accountId: "",
+        };
         navigate("transactions");
         break;
+      case "activity-period":
+        ctx.activityPeriod = value;
+        ctx.filters.from = ctx.filters.to = "";
+        render();
+        break;
+      case "previous-range":
+      case "next-range":
+        ctx.activityDate = shiftJournalDate(
+          ctx.activityPeriod,
+          ctx.activityDate,
+          action === "previous-range" ? -1 : 1,
+        );
+        ctx.filters.from = ctx.filters.to = "";
+        render();
+        break;
+      case "today-range":
+        ctx.activityPeriod = "day";
+        ctx.activityDate = dayKey(new Date());
+        ctx.filters.from = ctx.filters.to = "";
+        render();
+        break;
       case "category-activity":
-        ctx.filters.category = category;
+        ctx.activityPeriod = "month";
+        ctx.activityDate = ctx.month + "-01";
+        ctx.filters = {
+          type: "expense",
+          query: "",
+          category,
+          method: "",
+          from: "",
+          to: "",
+          accountId: "",
+        };
         ctx.showFilters = true;
         navigate("transactions");
         break;
@@ -907,7 +1185,11 @@ app.addEventListener("click", async (event) => {
               category: b.category,
               note: b.name,
               date: new Date().toISOString(),
-              paymentMethod: b.paymentMethod || "cash",
+              accountId: transactionAccountId(data, b),
+              paymentMethod: methodForAccount(
+                data,
+                transactionAccountId(data, b),
+              ),
               tags: [],
               recurringId: b.id,
             });
@@ -929,6 +1211,8 @@ app.addEventListener("click", async (event) => {
         change(
           (next) => {
             next.settings.theme = value;
+            if (!["dark", "night"].includes(value))
+              next.settings.lastLightTheme = value;
           },
           "Theme saved",
           { undo: false },
@@ -982,6 +1266,7 @@ app.addEventListener("click", async (event) => {
             "category",
             "note",
             "payment",
+            "account",
             "tags",
           ],
           ...data.transactions.map((t) => [
@@ -992,6 +1277,8 @@ app.addEventListener("click", async (event) => {
             t.category,
             t.note,
             t.paymentMethod || "cash",
+            data.accounts.find((a) => a.id === transactionAccountId(data, t))
+              ?.name || "",
             (t.tags || []).join("; "),
           ]),
         ];
@@ -1085,6 +1372,14 @@ app.addEventListener("change", (e) => {
     /^\d{4}-\d{2}$/.test(e.target.value)
   ) {
     ctx.month = e.target.value;
+    ctx.filters.from = ctx.filters.to = "";
+    render();
+  } else if (
+    e.target.id === "activity-date" &&
+    /^\d{4}-\d{2}(-\d{2})?$/.test(e.target.value)
+  ) {
+    ctx.activityDate =
+      e.target.value.length === 7 ? e.target.value + "-01" : e.target.value;
     ctx.filters.from = ctx.filters.to = "";
     render();
   } else if (e.target.id?.startsWith("filter-")) updateActivityResults();

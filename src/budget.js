@@ -51,11 +51,13 @@ export function budgetSummary(settings, transactions, today = new Date()) {
     .reduce((sum, t) => sum + Number(t.amount), 0);
   const total = Math.max(0, Number(settings.budget) || 0);
   const daily = days ? total / days : 0;
+  const beforeToday = Math.max(0, total - spent + todaySpent);
   const safePerDay =
     settings.rollover === false
-      ? daily
-      : Math.max(0, (total - spent + todaySpent) / Math.max(1, remainingDays));
-  const leftToday = Math.max(0, safePerDay - todaySpent);
+      ? Math.min(daily, beforeToday)
+      : beforeToday / Math.max(1, remainingDays);
+  const remaining = Math.max(0, total - spent);
+  const leftToday = Math.max(0, Math.min(remaining, safePerDay - todaySpent));
   return {
     start,
     end,
@@ -66,6 +68,8 @@ export function budgetSummary(settings, transactions, today = new Date()) {
     todaySpent,
     safePerDay,
     leftToday,
+    baseDaily: daily,
+    remaining,
     percent: safePerDay ? todaySpent / safePerDay : todaySpent ? 2 : 0,
   };
 }

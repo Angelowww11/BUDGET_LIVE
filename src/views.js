@@ -2,6 +2,13 @@ import { budgetSummary, dayKey } from "./budget.js";
 import { categoryNames, categoryMeta, categoryBadge } from "./categories.js";
 import { icon } from "./icons.js";
 import {
+  accountsPanel,
+  accountsView,
+  entryAccountLabel,
+} from "./accounts-ui.js";
+import { accountSummary } from "./accounts.js";
+import { journalRange, journalItems } from "./journal.js";
+import {
   total,
   inMonth,
   monthKey,
@@ -10,7 +17,6 @@ import {
   localDate,
   daysBetween,
   categoryTotals,
-  filterTransactions,
   activityStreak,
 } from "./model.js";
 import {
@@ -21,7 +27,6 @@ import {
   empty,
   percent,
   progress,
-  methodLabels,
   frequencyLabels,
 } from "./ui.js";
 
@@ -69,7 +74,7 @@ export function transactionList(
           n + (t.type === "income" ? Number(t.amount) : -Number(t.amount)),
         0,
       );
-      return `<section class="day-group"><div class="day-heading"><h3>${date === today ? "Today" : localDate(date).toLocaleDateString("en", { month: "short", day: "numeric", weekday: "short" })}</h3><span>${daily > 0 ? "+" : daily < 0 ? "−" : ""}${money(Math.abs(daily), data.settings.currency)}</span></div><div class="transaction-list">${rows.map((t) => `<button class="transaction-row" data-action="edit-entry" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.category)} ${esc(money(t.amount, data.settings.currency))}">${categoryBadge(data, t.category, t.type)}<span class="transaction-copy"><strong>${esc(t.note || t.category)}</strong><span>${esc(t.category)}<i>·</i>${esc(methodLabels[t.paymentMethod] || "Cash")}${t.tags?.length ? `<i>·</i>${esc(t.tags[0])}` : ""}</span></span><span class="transaction-amount ${t.type}">${t.type === "income" ? "+" : "−"}${money(t.amount, data.settings.currency)}</span>${icon("caret-right", "row-chevron")}</button>`).join("")}</div></section>`;
+      return `<section class="day-group"><div class="day-heading"><h3>${date === today ? "Today" : localDate(date).toLocaleDateString("en", { month: "short", day: "numeric", weekday: "short" })}</h3><span>${daily > 0 ? "+" : daily < 0 ? "−" : ""}${money(Math.abs(daily), data.settings.currency)}</span></div><div class="transaction-list">${rows.map((t) => `<button class="transaction-row" data-action="edit-entry" data-id="${esc(t.id)}" aria-label="Edit ${esc(t.category)} ${esc(money(t.amount, data.settings.currency))}">${categoryBadge(data, t.category, t.type)}<span class="transaction-copy"><strong>${esc(t.note || t.category)}</strong><span>${esc(t.category)}<i>·</i>${esc(entryAccountLabel(data, t))}${t.tags?.length ? `<i>·</i>${esc(t.tags[0])}` : ""}</span></span><span class="transaction-amount ${t.type}">${t.type === "income" ? "+" : "−"}${money(t.amount, data.settings.currency)}</span>${icon("caret-right", "row-chevron")}</button>`).join("")}</div></section>`;
     })
     .join("")}</div>`;
 }
@@ -98,62 +103,89 @@ function budgetRing(data, s) {
 
 export function homeView(ctx) {
   const { data } = ctx,
-    s = budgetSummary(data.settings, data.transactions);
-  const c = data.settings.currency,
-    m = monthTotals(data, monthKey(new Date()));
-  const setup = s.total === 0;
-  const recent = [...data.transactions].sort(
-    (a, b) => new Date(b.date) - new Date(a.date),
-  );
-  const status = setup
-    ? "Start your plan"
-    : s.percent > 1
-      ? "Over today’s allowance"
-      : s.percent >= 0.8
-        ? "Close to today’s limit"
-        : "A little room to breathe";
+    now = new Date(),
+    s = budgetSummary(data.settings, data.transactions),
+    c = data.settings.currency;
+  const m = monthTotals(data, monthKey(now)),
+    accounts = accountSummary(data),
+    today = dayKey(now);
+  const todayEntries = data.transactions
+    .filter((t) => t.type === "expense" && dayKey(t.date) === today)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const pairs = categoryTotals(todayEntries),
+    setup = s.total === 0;
+  const cycleName =
+    data.settings.cycle === "monthly"
+      ? "month"
+      : data.settings.cycle === "weekly"
+        ? "week"
+        : "2 weeks";
+  const adjusted = Math.abs(s.safePerDay - s.baseDaily) > 0.005;
   const upcoming = [...data.bills]
     .filter((b) => !b.completed)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 2);
-  return `${title(new Date().toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" }), "A clearer day for your money.", "A little awareness. A little more peace of mind.", button("Add transaction", "add-entry", "plus", "button primary desktop-only"))}
+  return `<div class="page-heading money-page-heading"><div><p class="eyebrow">${now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</p><h1>Your money, today<span class="handwritten-dot">.</span></h1></div>${button("Add transaction", "add-entry", "plus", "button primary desktop-only")}</div>
   <div class="dashboard-grid"><div class="dashboard-main">
-    <section class="daily-card"><div class="daily-heading"><span class="eyebrow">SAFE TO SPEND TODAY</span><span class="status-pill ${!setup && s.percent > 1 ? "danger" : ""}">${icon(setup ? "sparkle" : s.percent > 1 ? "warning-circle" : "check-circle")}${setup ? "Let’s begin" : "Daily allowance"}</span></div>
-    <div class="daily-amount">${setup ? '<span class="unset-amount">Your next good habit.</span>' : money(s.leftToday, c)}</div><p class="daily-message">${setup ? "Give your spending a plan. We’ll help you take it one day at a time." : status}</p>
-    ${setup ? `<div class="setup-actions">${button("Set my budget", "budget-dialog", "arrow-right", "button primary")}${button("Explore a sample", "start-demo", "", "button plain")}</div>` : `<div class="daily-bottom"><div><span>Spent today</span><strong>${money(s.todaySpent, c)}</strong></div><div><span>Today’s allowance</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Days remaining</span><strong>${s.remainingDays}<small> incl. today</small></strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s allowance used", s.percent >= 0.8)}`}
-    </section>
-    <section class="panel quick-panel">${panelHead("Your everyday shortcuts", "The little things you log often.", button("New shortcut", "add-template", "plus", "text-button"))}<div class="shortcut-grid">${
-      data.templates.length
-        ? data.templates
-            .slice(0, 6)
-            .map(
-              (t) =>
-                `<div class="shortcut"><button class="shortcut-log" data-action="quick-add" data-id="${esc(t.id)}">${categoryBadge(data, t.category)}<span><strong>${esc(t.name || t.category)}</strong><small>${money(t.amount, c)}</small></span></button>${iconButton(`Edit ${t.name || t.category} shortcut`, "edit-template", "dots-three", `data-id="${esc(t.id)}"`)}</div>`,
-            )
-            .join("")
-        : `<button class="shortcut-placeholder" data-action="add-template">${icon("bookmark-simple")}<span>Save your coffee, commute, or lunch.<small>One tap next time.</small></span>${icon("plus")}</button>`
-    }</div></section>
-    <section class="panel">${panelHead("Your spending rhythm", "The last seven days, one day at a time.", `<span class="soft-badge">${icon("chart-pie-slice")}7 days</span>`)}${weekChart(data)}</section>
-    <section class="panel activity-panel">${panelHead("Recent activity", "", button("View all", "view-activity", "arrow-right", "text-button"))}${transactionList(data, recent, { limit: 4, compact: true })}</section>
-  </div><aside class="dashboard-side" aria-label="Budget summary and upcoming">
-    <section class="panel month-panel">${panelHead("Your spending plan", "", iconButton("Edit spending plan", "budget-dialog", "pencil-simple"))}<p class="small muted">${s.start.toLocaleDateString("en", { month: "short", day: "numeric" })} – ${new Date(s.end.getTime() - 86400000).toLocaleDateString("en", { month: "short", day: "numeric" })}</p>${budgetRing(data, s)}<div class="plan-remaining"><span>Remaining this period</span><strong>${money(Math.max(0, s.total - s.spent), c)}</strong></div><div class="key-value"><span><i class="legend-dot spent-dot"></i>Spent</span><strong>${money(s.spent, c)}</strong></div><div class="key-value"><span><i class="legend-dot budget-dot"></i>Budget</span><strong>${money(s.total, c)}</strong></div><div class="panel-note">${icon("arrows-clockwise")}<span>${data.settings.rollover ? "Unspent money adjusts your next daily allowance." : "Your daily allowance stays fixed this period."}</span></div></section>
-    <section class="panel cashflow-panel">${panelHead("This month’s flow")}<div class="flow-item"><span class="flow-icon income">${icon("arrow-down-left")}</span><span>Money in</span><strong>${money(m.income, c)}</strong></div><div class="flow-item"><span class="flow-icon expense">${icon("arrow-up-right")}</span><span>Money out</span><strong>${money(m.expense, c)}</strong></div><div class="key-value flow-net"><span>Net balance</span><strong>${money(m.net, c)}</strong></div></section>
-    <section class="panel">${panelHead("On the horizon", "", button("Plan", "view-bills", "arrow-right", "text-button"))}${upcoming.length ? upcoming.map((b) => billRow(data, b, true)).join("") : `<div class="mini-empty">${icon("calendar-dots")}<p>Make room for what’s coming.</p>${button("Add a bill", "add-bill", "plus", "text-button")}</div>`}</section>
-    <div class="privacy-note">${icon("shield-check")}<span>A public app. Your private money.<br><strong>Saved only on this device.</strong></span></div>
-  </aside></div>`;
+  <section class="daily-card balance-first"><div class="daily-heading"><span class="eyebrow">BUDGET BALANCE REMAINING</span>${button("Edit plan", "budget-dialog", "pencil-simple", "text-button")}</div><div class="daily-amount">${money(s.remaining, c)}</div><div class="budget-subline"><span>${money(s.spent, c)} spent of ${money(s.total, c)} this ${cycleName}</span><span>${s.remainingDays} ${s.remainingDays === 1 ? "day" : "days"} left</span></div>
+  ${setup ? `<div class="setup-actions">${button("Set my budget", "budget-dialog", "arrow-right", "button primary")}${button("Explore a sample", "start-demo", "", "button plain")}</div>` : `<div class="budget-equation" aria-label="${s.total} divided by ${s.days} days equals ${money(s.baseDaily, c)} per day"><span>${money(s.total, c)}</span><i>÷</i><span>${s.days} days</span><i>=</i><strong>${money(s.baseDaily, c)}<small>/ day</small></strong></div>`}
+  <div class="today-budget-grid"><div><span>${adjusted ? "Adjusted limit today" : "Daily budget"}</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Spent today</span><strong class="${s.todaySpent > s.safePerDay ? "expense" : ""}">${money(s.todaySpent, c)}</strong></div><div class="today-left"><span>Left to spend today</span><strong>${money(s.leftToday, c)}</strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s budget used", s.percent >= 0.8)}
+  ${!setup ? `<p class="allowance-note">${icon(data.settings.rollover ? "arrows-clockwise" : "calendar-blank")}${data.settings.rollover ? `Flexible rollover is on. Unspent money is shared across the ${s.remainingDays} remaining days.` : `Fixed daily limit: ${money(s.baseDaily, c)}. Your allowance never exceeds the budget remaining.`}${button(data.settings.rollover ? "Use fixed limit" : "Change", data.settings.rollover ? "fixed-daily-limit" : "budget-dialog", "", "text-button")}</p>` : ""}
+  <button class="overview-account-link" data-action="view-accounts">${icon("wallet")}<span>Overall account balance <strong>${money(accounts.total, c)}</strong></span>${icon("caret-right")}</button></section>
+  <section class="panel today-spending-panel">${panelHead("Where today’s money went", `${todayEntries.length} ${todayEntries.length === 1 ? "expense" : "expenses"} · ${money(s.todaySpent, c)} spent`, button("Day view", "today-activity", "arrow-right", "text-button"))}${
+    pairs.length
+      ? `<div class="today-category-tags">${pairs
+          .slice(0, 4)
+          .map(
+            ([cat, value]) =>
+              `<button data-action="today-category" data-category="${esc(cat)}">${categoryBadge(data, cat)}<span>${esc(cat)}<b>${money(value, c)}</b></span></button>`,
+          )
+          .join(
+            "",
+          )}</div>${transactionList(data, todayEntries, { limit: 4, compact: true })}`
+      : empty(
+          "A fresh pocket for today",
+          "No expenses today yet. Your earlier entries are in Activity.",
+          "sun",
+          "add-entry",
+          "Log an expense",
+        )
+  }</section>
+  <section class="panel quick-panel">${panelHead("Your everyday shortcuts", "The usuals, without the extra taps.", button("New shortcut", "add-template", "plus", "text-button"))}<div class="shortcut-grid">${data.templates.length ? data.templates.map((t) => `<div class="shortcut"><button class="shortcut-log" data-action="quick-add" data-id="${esc(t.id)}">${categoryBadge(data, t.category)}<span><strong>${esc(t.name || t.category)}</strong><small>${money(t.amount, c)}</small></span></button>${iconButton(`Edit ${t.name || t.category} shortcut`, "edit-template", "dots-three", `data-id="${esc(t.id)}"`)}</div>`).join("") : `<button class="shortcut-placeholder" data-action="add-template">${icon("bookmark-simple")}<span>Save your coffee, commute, or lunch.<small>One tap next time.</small></span>${icon("plus")}</button>`}</div></section>
+  <section class="panel">${panelHead("Your week, at a glance", "Tap any day to open its entries.", button("Week view", "week-activity", "arrow-right", "text-button"))}${weekChart(data)}</section>
+  </div><aside class="dashboard-side" aria-label="Accounts and budget summary">${accountsPanel(data)}
+  <section class="panel period-mini-panel">${panelHead(`This ${cycleName}’s budget`)}${budgetRing(data, s)}<div class="key-value"><span>Starting budget</span><strong>${money(s.total, c)}</strong></div><div class="key-value"><span>Spent so far</span><strong>${money(s.spent, c)}</strong></div><div class="key-value"><span>Still available</span><strong>${money(s.remaining, c)}</strong></div><div class="panel-note">${icon("calendar-dots")}<span>${money(s.baseDaily, c)} × ${s.days} days in this period.</span></div></section>
+  <section class="panel cashflow-panel">${panelHead("This month’s flow")}<div class="flow-item"><span class="flow-icon income">${icon("arrow-down-left")}</span><span>Money in</span><strong>${money(m.income, c)}</strong></div><div class="flow-item"><span class="flow-icon expense">${icon("arrow-up-right")}</span><span>Money out</span><strong>${money(m.expense, c)}</strong></div><div class="key-value flow-net"><span>Net this month</span><strong>${money(m.net, c)}</strong></div></section>
+  <section class="panel">${panelHead("On the horizon", "", button("Plan", "view-bills", "arrow-right", "text-button"))}${upcoming.length ? upcoming.map((b) => billRow(data, b, true)).join("") : `<div class="mini-empty">${icon("calendar-dots")}<p>Make room for what’s coming.</p>${button("Add a bill", "add-bill", "plus", "text-button")}</div>`}</section></aside></div>`;
 }
 
 export function activityView(ctx) {
-  const { data, month, filters } = ctx,
-    m = monthTotals(data, month),
-    c = data.settings.currency;
-  const selected = filterTransactions(data.transactions, {
-    ...filters,
-    month: filters.allTime ? "" : month,
-  });
+  const { data, filters } = ctx,
+    c = data.settings.currency,
+    range = journalRange(ctx.activityPeriod, ctx.activityDate);
+  const all = journalItems(data, ctx),
+    selected = all,
+    income = total(all.filter((t) => t.type === "income")),
+    expense = total(all.filter((t) => t.type === "expense"));
   const cats = [...new Set(data.transactions.map((t) => t.category))].sort();
-  return `${title("YOUR MONEY JOURNAL", "Every little thing, in one place.", "See what came in, what went out, and where it went.", monthPicker(month))}
-  <div class="stats-strip"><div>${icon("arrow-down-left", "income")}<span>Income<strong>${money(m.income, c)}</strong></span></div><div>${icon("arrow-up-right", "expense")}<span>Expenses<strong>${money(m.expense, c)}</strong></span></div><div>${icon("wallet")}<span>Net this month<strong>${money(m.net, c)}</strong></span></div></div>
+  const rangePicker =
+    ctx.activityPeriod === "all"
+      ? '<span class="soft-badge">All recorded entries</span>'
+      : `<div class="month-picker journal-picker">${iconButton("Previous period", "previous-range", "caret-left")}<label class="month-label"><span>${esc(range.label)}</span><input id="activity-date" type="${ctx.activityPeriod === "month" ? "month" : "date"}" aria-label="Choose ${ctx.activityPeriod === "week" ? "a day in the week" : ctx.activityPeriod}" value="${ctx.activityPeriod === "month" ? ctx.activityDate.slice(0, 7) : ctx.activityDate}"></label>${iconButton("Next period", "next-range", "caret-right")}</div>`;
+  return `${title("YOUR MONEY JOURNAL", "One day. One week. Your whole story.", "Every entry keeps its date. Pick the view that helps you.", rangePicker)}<div class="journal-controls"><div class="segmented journal-periods" role="group" aria-label="Activity period">${[
+    ["day", "Day"],
+    ["week", "Week"],
+    ["month", "Month"],
+    ["all", "All time"],
+  ]
+    .map(
+      ([value, label]) =>
+        `<button data-action="activity-period" data-value="${value}" class="${ctx.activityPeriod === value ? "selected" : ""}" aria-pressed="${ctx.activityPeriod === value}">${label}</button>`,
+    )
+    .join(
+      "",
+    )}</div>${button("Today", "today-range", "sun", "button small outline")}</div>
+  <div class="stats-strip"><div>${icon("arrow-down-left", "income")}<span>Income in this view<strong id="view-income">${money(income, c)}</strong></span></div><div>${icon("arrow-up-right", "expense")}<span>Spent in this view<strong id="view-spent">${money(expense, c)}</strong></span></div><div>${icon("wallet")}<span>Net in this view<strong id="view-net">${money(income - expense, c)}</strong></span></div></div>
   <section class="panel"><div class="activity-tools"><div class="segmented" role="group" aria-label="Transaction type">${[
     ["all", "All entries"],
     ["expense", "Expenses"],
@@ -166,21 +198,7 @@ export function activityView(ctx) {
     .join(
       "",
     )}</div><div class="activity-search">${icon("magnifying-glass")}<input id="transaction-search" type="search" placeholder="Search notes, categories, tags…" aria-label="Search transactions" value="${esc(filters.query)}"></div>${iconButton("Toggle filters", "toggle-filters", "sliders-horizontal", `aria-expanded="${ctx.showFilters}"`)}</div>
-  ${
-    ctx.showFilters
-      ? `<div class="filter-grid"><label>Category<select id="filter-category"><option value="">All categories</option>${cats.map((cat) => `<option ${cat === filters.category ? "selected" : ""}>${esc(cat)}</option>`).join("")}</select></label><label>Payment<select id="filter-method"><option value="">All methods</option>${Object.entries(
-          methodLabels,
-        )
-          .map(
-            ([v, n]) =>
-              `<option value="${v}" ${filters.method === v ? "selected" : ""}>${n}</option>`,
-          )
-          .join(
-            "",
-          )}</select></label><label>From<input type="date" id="filter-from" value="${esc(filters.from)}"></label><label>To<input type="date" id="filter-to" value="${esc(filters.to)}"></label><label class="checkbox"><input type="checkbox" id="filter-all-time" ${filters.allTime ? "checked" : ""}> Search all months</label>${button("Clear filters", "clear-filters", "", "text-button")}</div>`
-      : ""
-  }
-  <div class="list-summary"><span id="results-count">${selected.length} ${selected.length === 1 ? "entry" : "entries"}</span>${button("Export CSV", "export-csv", "export", "text-button")}</div><div id="transaction-results">${selected.length ? transactionList(data, selected) : empty("No entries to show", "Try another month or clear your filters.", "magnifying-glass", "add-entry", "Add a transaction")}</div></section>`;
+  ${ctx.showFilters ? `<div class="filter-grid"><label>Category<select id="filter-category"><option value="">All categories</option>${cats.map((cat) => `<option ${cat === filters.category ? "selected" : ""}>${esc(cat)}</option>`).join("")}</select></label><label>Account<select id="filter-accountId"><option value="">All accounts</option>${data.accounts.map((a) => `<option value="${esc(a.id)}" ${filters.accountId === a.id ? "selected" : ""}>${esc(a.name)}</option>`).join("")}</select></label><label>From (within this view)<input type="date" id="filter-from" value="${esc(filters.from)}"></label><label>To<input type="date" id="filter-to" value="${esc(filters.to)}"></label>${button("Clear filters", "clear-filters", "", "text-button")}</div>` : ""}<div class="list-summary"><span id="results-count">${selected.length} ${selected.length === 1 ? "entry" : "entries"}</span>${button("Export CSV", "export-csv", "export", "text-button")}</div><div id="transaction-results">${selected.length ? transactionList(data, selected) : empty("No entries for this view", "Choose another day or week, or log something here.", "calendar-blank", "add-entry", "Add a transaction")}</div></section>`;
 }
 
 function billRow(data, b, compact = false) {
@@ -329,14 +347,20 @@ export const themes = [
   ["brown", "Mocha", "#805a43", "#ede2d6"],
   ["pink", "Blush", "#ae597d", "#f8e2eb"],
   ["yellow", "Sunshine", "#8c691b", "#fbebac"],
-  ["dark", "Midnight", "#a7c9ba", "#24322e"],
+  ["lavender", "Lilac", "#79609e", "#eee5f5"],
+  ["peach", "Peach", "#a45d3e", "#f9e5d8"],
+  ["cherry", "Cherry", "#9b3e53", "#f5dfe5"],
+  ["teal", "Lagoon", "#287b7b", "#dceeee"],
+  ["dark", "Dark", "#a7c9ba", "#24322e"],
+  ["night", "Navy night", "#b1bfec", "#242b43"],
 ];
 
 export function settingsView(ctx) {
   const { data, settingsTab } = ctx;
   let content;
   if (settingsTab === "appearance")
-    content = `<section class="panel">${panelHead("Find your kind of daylight", "The same calm workspace, in your favorite colors.")}<div class="theme-grid">${themes.map(([id, name, accent, tint]) => `<button class="theme-preview ${data.settings.theme === id ? "selected" : ""}" data-action="theme" data-value="${id}" aria-pressed="${data.settings.theme === id}" style="--preview-accent:${accent};--preview-tint:${tint}"><span class="mini-preview"><i></i><i></i><i></i><i></i></span><span>${name}${data.settings.theme === id ? icon("check-circle") : ""}</span></button>`).join("")}</div></section>`;
+    content = `<section class="panel">${panelHead("Find your kind of daylight", "Light, dark, and a few colors to make it yours.")}<div class="theme-grid">${themes.map(([id, name, accent, tint]) => `<button class="theme-preview ${data.settings.theme === id ? "selected" : ""}" data-action="theme" data-value="${id}" aria-pressed="${data.settings.theme === id}" style="--preview-accent:${accent};--preview-tint:${tint}"><span class="mini-preview"><i></i><i></i><i></i><i></i></span><span>${name}${data.settings.theme === id ? icon("check-circle") : ""}</span></button>`).join("")}</div></section>`;
+  else if (settingsTab === "accounts") content = accountsView(ctx);
   else if (settingsTab === "categories")
     content = `<section class="panel">${panelHead("Make your categories yours", "Choose a name, icon, and color that you recognize instantly.", button("New category", "add-category", "plus", "button small primary"))}<div class="category-manager">${[
       "expense",
@@ -372,8 +396,9 @@ export function settingsView(ctx) {
       .join(
         "",
       )}</select></label></div><label class="switch-label"><span><strong>Flexible daily allowance</strong><small>Adjust remaining days as you spend more or less.</small></span><input type="checkbox" role="switch" name="rollover" ${data.settings.rollover ? "checked" : ""}></label><p class="form-error" role="alert"></p><button class="button primary" type="submit">${icon("check")}Save spending plan</button></form></section><section class="panel settings-companion"><span class="companion-art">${icon("flower-lotus")}</span><h2>A plan, not a perfect score.</h2><p>The daily allowance helps you see what’s available. Some days cost more than others. You can adjust the plan whenever life changes.</p><div class="panel-note">${icon("wallet")}<span>Logging income records money received. Change your spending plan when you want to make more of it available.</span></div></section></div>`;
-  return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
+  return `${title("A SPACE THAT FEELS LIKE YOU", "Make yourself at home.", "Your preferences, your categories, your data.")}<div class="appearance-shortcut">${icon(["dark", "night"].includes(data.settings.theme) ? "moon" : "sun")}<span><strong>Dark mode</strong><small>${["dark", "night"].includes(data.settings.theme) ? "On · an easier view after hours" : "Off · switch it on anytime"}</small></span><button class="mode-switch" data-action="toggle-dark" role="switch" aria-label="Dark mode" aria-checked="${["dark", "night"].includes(data.settings.theme)}"><i></i></button>${button("More themes", "view-themes", "arrow-right", "text-button")}</div><div class="subnav settings-nav" role="group" aria-label="Settings sections">${[
     ["general", "Spending plan", "wallet"],
+    ["accounts", "Accounts", "credit-card"],
     ["appearance", "Themes", "sun"],
     ["categories", "Categories", "tag"],
     ["data", "Data & privacy", "shield-check"],

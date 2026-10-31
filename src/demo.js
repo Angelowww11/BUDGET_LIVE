@@ -1,5 +1,6 @@
 import { emptyState } from "./store.js";
 import { dayKey } from "./budget.js";
+import { initialAccounts } from "./accounts.js";
 export function demoState() {
   const d = emptyState();
   const now = new Date();
@@ -113,5 +114,17 @@ export function demoState() {
     Shopping: 2500,
     Transport: 2000,
   };
+  const opening = {
+    cash: 3000,
+    card: 10000,
+    savings: 18500,
+    bank: 0,
+    ewallet: 3000,
+  };
+  d.accounts = initialAccounts(d).map((a) => ({
+    ...a,
+    openingBalance: opening[a.type] || 0,
+    configured: true,
+  }));
   return d;
 }

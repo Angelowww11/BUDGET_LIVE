@@ -2,6 +2,33 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { budgetSummary, periodBounds } from "../src/budget.js";
 const settings = { budget: 3100, cycle: "monthly", rollover: true };
+test("8000 split over 31 days shows a 258.06 base daily budget", () => {
+  const s = budgetSummary(
+    { budget: 8000, cycle: "monthly", rollover: false },
+    [],
+    new Date(2026, 9, 31, 12),
+  );
+  assert.equal(s.days, 31);
+  assert.equal(s.baseDaily.toFixed(2), "258.06");
+  assert.equal(s.safePerDay.toFixed(2), "258.06");
+  assert.equal(s.remaining, 8000);
+});
+test("a fixed allowance cannot exceed the last money left in the period", () => {
+  const date = new Date(2026, 9, 31, 12);
+  const s = budgetSummary(
+    { budget: 8000, cycle: "monthly", rollover: false },
+    [
+      {
+        type: "expense",
+        amount: 7990,
+        date: new Date(2026, 9, 30, 12).toISOString(),
+      },
+    ],
+    date,
+  );
+  assert.equal(s.leftToday, 10);
+  assert.equal(s.remaining, 10);
+});
 test("month boundaries and daily allowance", () => {
   const d = new Date(2026, 0, 1, 12);
   const p = periodBounds(d);

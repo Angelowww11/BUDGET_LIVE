@@ -44,3 +44,13 @@ All used SVGs and fonts are bundled with the app. There are no icon-font or imag
 - Browser checks for entry editing, category creation with draft preservation, shortcuts and Undo, limits, bill confirmation and Undo, and savings contributions.
 - Older JSON backup restore verified through the interface, retaining record IDs and original fields.
 - Production subpath tested with the service worker: offline reload, offline income entry, another reload, and a prompted app update that retained the same saved transaction.
+
+## Balance and daily-journal update
+
+The overview now leads with remaining budget, shows the original budget divided by the full number of days, and keeps today's limit, spending, remaining allowance, and expense details together. The original income/expense journal is available as Day, Week, Month, and All time, with an independent date picker. Weeks start Monday and can cross month boundaries.
+
+Cash, Card, and Savings start as separate accounts; users can add Bank, E-wallet, or additional accounts. Old transactions are mapped from their existing payment methods without rewriting record IDs or amounts. Changing a current account balance corrects its opening balance. Transfers move funds between accounts without changing total money, income, spending, or the daily budget.
+
+The new palette choices are Lilac, Peach, Cherry, Lagoon, and Navy night, bringing the total to eleven. Dark mode has a header moon/sun control and an explicit switch in More. Small receipt-style dividers and category tags add personality while keeping the money readable.
+
+Verification adds exact 8,000 / 31 budget checks, account-balance and transfer conservation tests, legacy mapping, account backup round-trips, week boundaries, selected-day entry, and four responsive widths. The overview and account screens were scanned in all eleven themes.

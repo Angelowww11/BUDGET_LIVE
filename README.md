@@ -16,16 +16,17 @@ This is an installable web app with its own home-screen icon and standalone wind
 
 ## Features
 
-- Daily allowance for monthly, weekly, or two-week spending periods, with optional rollover.
+- Balance-first overview with remaining budget, today’s spending and categories, overall account balance, and a visible division such as PHP 8,000 / 31 days = PHP 258.06 per day. New plans use a fixed daily allowance by default; existing rollover preferences are preserved.
 - A responsive overview, actual seven-day spending chart, period budget ring, and cash-flow summary.
 - Expense and income entry with a visual category grid, notes, dates, payment method, and tags.
-- Editing, duplicating, deletion with Undo, and a searchable journal with month, category, payment, date-range, and transaction-type filters.
+- Editing, duplicating, deletion with Undo, and a searchable journal with Day, Week, Month, and All time views. Week views include entries across month and year boundaries. Filters cover category, account, dates, notes, tags, and transaction type.
 - Quick-add shortcuts that can be created from an existing transaction, edited, and undone after logging.
 - Monthly category limits, progress, and over-budget states.
 - Savings goals with target dates, suggested weekly contributions, and a contribution form.
 - Bills and recurring expenses/income with explicit payment confirmation and correct next-date handling.
 - Monthly category breakdown, savings rate, largest expense, tracking streak, and cumulative spending chart. The budget pace comparison is shown only for monthly spending plans.
-- Six complete color themes and custom category icons/colors.
+- Eleven complete color themes, including Dark and Navy night, plus a visible moon/sun toggle and a labeled dark-mode switch. Custom category icons/colors remain available.
+- Cash, Card, Savings, Bank, and E-wallet account types, editable current balances, account-specific records, and transfers that do not count as expenses or income.
 - JSON backup/restore, CSV export, a previous on-device recovery copy, and storage-conflict protection.
 - Sample preview mode that does not overwrite personal records.
 
@@ -45,7 +46,7 @@ There is no backend, analytics, bank linking, account, or transaction upload. Fo
 
 ## Budget assumptions
 
-The spending plan is the amount available to spend, separate from recorded income. Logging income does not automatically increase it. Category limits are monthly guides within this plan, not additional money. Savings contributions update the goal tracker without logging an expense. Recurring items are logged only after confirmation; no background scheduler or notification delivery is implied.
+The spending plan is the amount available to spend, separate from the overall account ledger and recorded income. The overview displays both budget balance and overall account balance with their labels. A first-time plan can also initialize Cash to the same amount without logging income. Logging income does not automatically increase it. Category limits are monthly guides within this plan, not additional money. Savings-goal contributions update the goal tracker without logging an expense. To move actual funds, use Accounts → Move money. Transfers retain the overall account total and do not change the spending plan. Accounts marked as set aside are excluded from the everyday-money subtotal. Recurring items are logged only after confirmation; no background scheduler or notification delivery is implied.
 
 ## Development
 
@@ -64,6 +65,8 @@ To reproduce the GitHub Pages path, set `BASE_PATH=/BUDGET_LIVE/` while building
 - `src/app.css`: one design system, all themes, and responsive layouts.
 - `src/store.js`: backward-compatible storage, validation, backup/restore, and conflict handling.
 - `src/budget.js` and `src/model.js`: budget and money calculations.
+- `src/accounts.js` and `src/accounts-ui.js`: account balances, legacy payment-method mapping, and account views.
+- `src/journal.js`: daily/weekly/monthly ranges, navigation, and date-aware filtering.
 - `src/categories.js` and `src/icons.js`: curated category metadata and local SVG imports.
 - `src/pwa.js` and `scripts/build-pwa.mjs`: installation, offline files, and prompted updates.
 

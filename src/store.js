@@ -1,3 +1,4 @@
+import { initialAccounts, accountTypes } from "./accounts.js";
 export const STORAGE_KEY = "daylight-budget-v1";
 export const RECOVERY_KEY = `${STORAGE_KEY}-recovery`;
 let lastRead = null;
@@ -9,7 +10,7 @@ export function emptyState() {
       budget: 0,
       currency: "PHP",
       cycle: "monthly",
-      rollover: true,
+      rollover: false,
       theme: "green",
     },
     transactions: [],
@@ -20,6 +21,8 @@ export function emptyState() {
     goals: [],
     bills: [],
     categoryBudgets: {},
+    accounts: initialAccounts(),
+    transfers: [],
   };
 }
 
@@ -50,8 +53,52 @@ export function normalize(value) {
     "goals",
     "bills",
     "hiddenCategories",
+    "transfers",
   ])
     next[key] = array(value[key], key);
+  next.accounts = (
+    value.accounts === undefined
+      ? initialAccounts(value)
+      : array(value.accounts, "accounts")
+  ).map(
+    (a) =>
+      a && {
+        ...a,
+        includeInSpending:
+          a.includeInSpending === undefined
+            ? a.type !== "savings"
+            : Boolean(a.includeInSpending),
+        configured: Boolean(a.configured),
+      },
+  );
+  const accountIds = new Set();
+  for (const account of next.accounts) {
+    if (
+      !account ||
+      typeof account.id !== "string" ||
+      accountIds.has(account.id) ||
+      typeof account.name !== "string" ||
+      !account.name.trim() ||
+      !Object.hasOwn(accountTypes, account.type) ||
+      !Number.isFinite(Number(account.openingBalance))
+    )
+      throw new Error("An account is invalid.");
+    accountIds.add(account.id);
+  }
+  if (!accountIds.size) throw new Error("Keep at least one account.");
+  for (const t of next.transfers) {
+    if (
+      !t ||
+      !t.id ||
+      !accountIds.has(t.fromId) ||
+      !accountIds.has(t.toId) ||
+      t.fromId === t.toId ||
+      !Number.isFinite(Number(t.amount)) ||
+      Number(t.amount) <= 0 ||
+      !Number.isFinite(new Date(t.date).getTime())
+    )
+      throw new Error("An account transfer is invalid.");
+  }
   if (
     !Number.isFinite(Number(next.settings.budget)) ||
     Number(next.settings.budget) < 0
@@ -82,6 +129,8 @@ export function normalize(value) {
         "One or more transactions are invalid. Your current records have not been replaced.",
       );
     ids.add(t.id);
+    if (t.accountId && !accountIds.has(t.accountId))
+      throw new Error("A transaction refers to an unknown account.");
     if (t.tags !== undefined && !Array.isArray(t.tags))
       throw new Error("Transaction tags are invalid.");
   }
@@ -106,6 +155,8 @@ export function normalize(value) {
       Number(t.amount) <= 0
     )
       throw new Error("A quick-add shortcut is invalid.");
+    if (t.accountId && !accountIds.has(t.accountId))
+      throw new Error("A shortcut refers to an unknown account.");
   }
   for (const b of next.bills) {
     if (
@@ -117,6 +168,8 @@ export function normalize(value) {
       !/^\d{4}-\d{2}-\d{2}$/.test(b.dueDate)
     )
       throw new Error("A scheduled payment is invalid.");
+    if (b.accountId && !accountIds.has(b.accountId))
+      throw new Error("A recurring entry refers to an unknown account.");
     if (
       !Number.isFinite(new Date(`${b.dueDate}T12:00:00`).getTime()) ||
       !["once", "weekly", "biweekly", "monthly", "yearly"].includes(b.frequency)
