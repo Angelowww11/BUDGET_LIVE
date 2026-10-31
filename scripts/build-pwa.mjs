@@ -17,6 +17,7 @@ async function files(dir, prefix = "") {
 }
 const assets = (await files("dist")).sort();
 const hash = createHash("sha256");
+hash.update("daylight-shell-v2-embedded-html");
 for (const asset of assets) hash.update(await readFile(`dist/${asset}`));
 const revision = hash.digest("hex").slice(0, 16);
 const source = `/* Daylight app files only. Personal records stay in browser storage. */
@@ -24,8 +25,13 @@ const REVISION = ${JSON.stringify(revision)};
 const PREFIX = 'daylight-shell-' + new URL(self.registration.scope).pathname.replace(/[^a-zA-Z0-9]/g, '-');
 const CACHE = PREFIX + REVISION;
 const ASSETS = ${JSON.stringify(assets)};
+// Embed this build's HTML so a fresh worker cannot precache stale HTTP-cached markup.
+const SHELL = ${JSON.stringify(await readFile("dist/index.html", "utf8"))};
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS.map(path => new URL(path, self.registration.scope).href))));
+  event.waitUntil(caches.open(CACHE).then(async cache => {
+    await cache.addAll(ASSETS.filter(path => path !== 'index.html').map(path => new Request(new URL(path, self.registration.scope).href, {cache:'reload'})));
+    await cache.put(new URL('index.html', self.registration.scope).href, new Response(SHELL, {headers:{'Content-Type':'text/html; charset=utf-8'}}));
+  }));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(names => Promise.all(names.filter(name => name.startsWith(PREFIX) && name !== CACHE).map(name => caches.delete(name)))).then(() => self.clients.claim()));

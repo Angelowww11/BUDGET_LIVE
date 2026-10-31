@@ -25,6 +25,7 @@ export function initPWA(callback) {
     navigator.serviceWorker
       .register(`${import.meta.env.BASE_URL}sw.js`, {
         scope: import.meta.env.BASE_URL,
+        updateViaCache: "none",
       })
       .then((reg) => {
         registration = reg;

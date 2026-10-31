@@ -54,3 +54,5 @@ Cash, Card, and Savings start as separate accounts; users can add Bank, E-wallet
 The new palette choices are Lilac, Peach, Cherry, Lagoon, and Navy night, bringing the total to eleven. Dark mode has a header moon/sun control and an explicit switch in More. Small receipt-style dividers and category tags add personality while keeping the money readable.
 
 Verification adds exact 8,000 / 31 budget checks, account-balance and transfer conservation tests, legacy mapping, account backup round-trips, week boundaries, selected-day entry, and four responsive widths. The overview and account screens were scanned in all eleven themes.
+
+A live upgrade check exposed stale HTML in the browser HTTP cache. The offline builder now embeds the exact release HTML and fetches its static assets with reload semantics. A regression test simulates an older cached page, verifies the correct new page and JavaScript work offline, and checks that unrelated app caches remain untouched.

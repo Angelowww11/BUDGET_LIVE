@@ -37,7 +37,7 @@ The public repository contains app code and assets only. Personal records use th
 There is no backend, analytics, bank linking, account, or transaction upload. Fonts and icons are bundled locally. Browser storage is not cloud sync or encryption; anyone with access to the unlocked browser profile can access it.
 
 - App releases cache only app files. The service worker never clears localStorage and only removes its own old app caches.
-- New releases wait for the user to choose **Update now**. An unfinished entry is not reloaded automatically.
+- New releases wait for the user to choose **Update now**. An unfinished entry is not reloaded automatically. Each offline release embeds its matching HTML and reloads its assets, so an older browser HTTP-cache entry cannot mix old markup with new files.
 - Saving retains the previous data copy under `daylight-budget-v1-recovery`.
 - Invalid data opens a recovery screen rather than being silently replaced by empty records.
 - Failed writes leave the saved value intact. Another window's edits are detected before a conflicting save.
