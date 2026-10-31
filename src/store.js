@@ -1,6 +1,6 @@
 import { initialAccounts, accountTypes } from "./accounts.js";
 import { colorMode } from "./appearance.js";
-import { validateSalary } from "./budget.js";
+import { dayKey, validateSalary } from "./budget.js";
 export const STORAGE_KEY = "daylight-budget-v1";
 export const RECOVERY_KEY = `${STORAGE_KEY}-recovery`;
 let lastRead = null;
@@ -12,6 +12,11 @@ const defaultSalary = () => ({
   amount1: 0,
   amount2: 0,
 });
+const previousMonth = () => {
+  const now = new Date();
+  const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, "0")}`;
+};
 
 function normalizeSalary(value) {
   if (value === undefined) return defaultSalary();
@@ -49,6 +54,9 @@ export function emptyState() {
       currency: "PHP",
       cycle: "monthly",
       rollover: false,
+      carryover: true,
+      carryoverFrom: dayKey(new Date()).slice(0, 7),
+      carryoverOpening: 0,
       theme: "green",
       colorMode: "light",
       salary: defaultSalary(),
@@ -86,6 +94,8 @@ export function normalize(value) {
     ...value,
     settings: { ...base.settings, ...value.settings },
   };
+  if (!value.settings.carryoverFrom)
+    next.settings.carryoverFrom = previousMonth();
   next.settings.colorMode = colorMode(value.settings);
   next.settings.salary = normalizeSalary(value.settings.salary);
   if (next.settings.cycle === "salary" && !next.settings.salary.enabled)

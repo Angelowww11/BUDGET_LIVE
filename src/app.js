@@ -2,7 +2,12 @@ import { paydayFields, salaryFields, updatePaydayFields } from "./payday-ui.js";
 import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
 import "./app.css";
-import { dayKey, validatePayday, validateSalary } from "./budget.js";
+import {
+  budgetSummary,
+  dayKey,
+  validatePayday,
+  validateSalary,
+} from "./budget.js";
 import {
   load,
   save,
@@ -847,6 +852,12 @@ function saveBudget(f) {
     ...(salary ? { salary } : {}),
   };
   validatePayday(schedule);
+  const carryoverOpening =
+    data.settings.cycle === "monthly" &&
+    data.settings.budget > 0 &&
+    data.settings.carryover !== false
+      ? budgetSummary(data.settings, data.transactions).carryover
+      : 0;
   change((next) => {
     if (f.has("cashStartingBalance")) {
       const cash = next.accounts.find((a) => a.type === "cash");
@@ -861,6 +872,9 @@ function saveBudget(f) {
       currency: f.get("currency"),
       ...schedule,
       rollover: f.has("rollover"),
+      carryover: f.has("carryover"),
+      carryoverFrom: monthKey(new Date()),
+      carryoverOpening,
     };
   }, "Spending plan saved");
 }

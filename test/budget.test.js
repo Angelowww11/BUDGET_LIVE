@@ -78,3 +78,42 @@ test("daily overspending never produces a negative available amount", () => {
   const tx = [{ type: "expense", amount: 5000, date: today.toISOString() }];
   assert.equal(budgetSummary(settings, tx, today).leftToday, 0);
 });
+test("unused monthly spending money carries through multiple months", () => {
+  const plan = {
+    budget: 8000,
+    cycle: "monthly",
+    rollover: false,
+    carryover: true,
+    carryoverFrom: "2026-10",
+    carryoverOpening: 0,
+  };
+  const entries = [
+    { type: "expense", amount: 3000, date: "2026-10-10T12:00:00" },
+    { type: "expense", amount: 2000, date: "2026-11-10T12:00:00" },
+  ];
+  const november = budgetSummary(plan, entries, new Date(2026, 10, 1, 12));
+  assert.equal(november.carryover, 5000);
+  assert.equal(november.total, 13000);
+  assert.equal(november.baseDaily.toFixed(2), "433.33");
+  const december = budgetSummary(plan, entries, new Date(2026, 11, 1, 12));
+  assert.equal(december.carryover, 11000);
+  assert.equal(december.remaining, 19000);
+  const changedPlan = {
+    ...plan,
+    budget: 10000,
+    carryoverFrom: "2026-11",
+    carryoverOpening: november.carryover,
+  };
+  assert.equal(
+    budgetSummary(changedPlan, entries, new Date(2026, 10, 1, 12)).total,
+    15000,
+  );
+  assert.equal(
+    budgetSummary(
+      { ...plan, carryover: false },
+      entries,
+      new Date(2026, 11, 1, 12),
+    ).remaining,
+    8000,
+  );
+});

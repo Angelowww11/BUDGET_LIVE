@@ -17,6 +17,7 @@ This is an installable web app with its own home-screen icon and standalone wind
 ## Features
 
 - Allowance-based budgets: choose **Edit plan → Until next allowance / income**, set the budget start and next payment date, and optionally repeat monthly. Daily limits use those dates instead of month end. The next payment date begins the new period; repeating renews the budget without adding an account transaction.
+- Monthly spending plans carry unused budget into later months. The carried amount is included in the next month’s daily limit, and the setting can be changed in **Edit plan**. Cash, card, and savings balances keep their full transaction history independently.
 - Salary paydays: choose **Twice monthly (salary dates)** in the spending plan, then set two paydays such as the 15th and 30th with an expected amount for each. The spending period runs from one payday to the next. **Plan → Paydays** shows both dates, the next payday, and a **Log salary** shortcut that opens a pre-filled income entry.
 - Monthly bills and subscriptions: **Plan → Monthly bills** keeps a dedicated list of recurring monthly expenses with amount, due day, category, and account. It shows the monthly total, next bill, and offers **Mark paid** to log an expense when it actually happens.
 - Balance-first overview with remaining budget, today’s spending and categories, overall account balance, and a visible division such as PHP 8,000 / 31 days = PHP 258.06 per day. New plans use a fixed daily allowance by default; existing rollover preferences are preserved.

@@ -10,18 +10,11 @@ export function budgetDate(value) {
 }
 const ordinal = (d) =>
   Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
-const daysInMonth = (year, month) =>
-  new Date(year, month + 1, 0).getDate();
+const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 const salaryDate = (year, month, day) =>
-  new Date(
-    year,
-    month,
-    Math.min(Number(day), daysInMonth(year, month)),
-  );
+  new Date(year, month, Math.min(Number(day), daysInMonth(year, month)));
 const validSalaryDay = (day) =>
-  Number.isInteger(Number(day)) &&
-  Number(day) >= 1 &&
-  Number(day) <= 31;
+  Number.isInteger(Number(day)) && Number(day) >= 1 && Number(day) <= 31;
 export function salarySlots(settings = {}) {
   const salary = settings.salary;
   if (!salary?.enabled) return [];
@@ -185,7 +178,35 @@ export function budgetSummary(settings, transactions, today = new Date()) {
   const todaySpent = transactions
     .filter((t) => t.type === "expense" && dayKey(t.date) === dayKey(today))
     .reduce((sum, t) => sum + Number(t.amount), 0);
-  const total = Math.max(0, Number(settings.budget) || 0);
+  const baseBudget = Math.max(0, Number(settings.budget) || 0);
+  let carryover =
+    settings.cycle === "monthly" && settings.carryover !== false
+      ? Math.max(0, Number(settings.carryoverOpening) || 0)
+      : 0;
+  if (settings.cycle === "monthly" && settings.carryover !== false) {
+    const anchor = budgetDate(`${settings.carryoverFrom}-01`);
+    if (anchor && anchor < start) {
+      const month = new Date(anchor);
+      for (let count = 0; month < start && count < 120; count++) {
+        const nextMonth = new Date(
+          month.getFullYear(),
+          month.getMonth() + 1,
+          1,
+        );
+        const priorSpent = transactions
+          .filter(
+            (t) =>
+              t.type === "expense" &&
+              new Date(t.date) >= month &&
+              new Date(t.date) < nextMonth,
+          )
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+        carryover = Math.max(0, carryover + baseBudget - priorSpent);
+        month.setMonth(month.getMonth() + 1);
+      }
+    }
+  }
+  const total = baseBudget + carryover;
   const daily = days ? total / days : 0;
   const beforeToday = Math.max(0, total - spent + todaySpent);
   const safePerDay = !active
@@ -202,6 +223,8 @@ export function budgetSummary(settings, transactions, today = new Date()) {
     remainingDays,
     active,
     total,
+    baseBudget,
+    carryover,
     spent,
     todaySpent,
     safePerDay,
