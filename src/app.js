@@ -3,6 +3,7 @@ import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
 import "./app.css";
 import "./refined.css";
+import { calculateAmount } from "./calculator.js";
 import {
   budgetSummary,
   budgetFromAvailableBalance,
@@ -135,7 +136,7 @@ function render() {
     stats: insightsView,
     settings: settingsView,
   }[ctx.view];
-  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="M.Y.M.P. overview">${logo}<span>M.Y.M.P.<small>PERSONAL FINANCE</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take M.Y.M.P. with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>M.Y.M.P.</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}" title="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}">${icon(colorMode(data.settings) === "dark" ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>M.Y.M.P. · Personal finance</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
+  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="M.Y.M.P. overview">${logo}<span>M.Y.M.P.<small>PERSONAL FINANCE</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take M.Y.M.P. with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>M.Y.M.P.</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}" title="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}">${icon(colorMode(data.settings) === "dark" ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>M.Y.M.P. · Personal finance</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
 }
 
 function renderRecovery() {
@@ -380,6 +381,31 @@ function transferDialog() {
   });
 }
 
+function calculatorFields(amount = "") {
+  const keys = [
+    ["clear", "AC", "Clear calculation"],
+    ["back", "⌫", "Delete last digit"],
+    ["%", "%", "Percent"],
+    ["÷", "÷", "Divide"],
+    ["7", "7"],
+    ["8", "8"],
+    ["9", "9"],
+    ["×", "×", "Multiply"],
+    ["4", "4"],
+    ["5", "5"],
+    ["6", "6"],
+    ["−", "−", "Subtract"],
+    ["1", "1"],
+    ["2", "2"],
+    ["3", "3"],
+    ["+", "+", "Add"],
+    ["0", "0"],
+    [".", ".", "Decimal point"],
+    ["equals", "=", "Calculate"],
+  ];
+  return `<section class="entry-calculator" aria-label="Amount calculator"><div class="calculator-display"><label for="entry-calculation">Amount <span>${esc(data.settings.currency)}</span></label><input id="entry-calculation" name="amount" inputmode="none" autocomplete="off" maxlength="120" placeholder="0" value="${esc(amount || "")}" aria-label="Amount or calculation" required><div class="calculator-total"><span>Total</span><output class="calculator-result" aria-live="polite"></output></div></div><div class="calculator-keys">${keys.map(([key, label, name]) => `<button type="button" class="calc-key ${key === "equals" ? "calc-equals" : ["÷", "×", "−", "+"].includes(key) ? "calc-operation" : ""}" data-calc-key="${key}" aria-label="${name || label}">${label}</button>`).join("")}</div><p class="calculator-hint">Add up a receipt or enter an amount. Save uses the total.</p></section>`;
+}
+
 function entryDialog(entry = {}) {
   let type = entry.type || "expense",
     selected = entry.category || categoryNames(data, type)[0];
@@ -398,13 +424,69 @@ function entryDialog(entry = {}) {
       .join("");
   const d = modal(
     entry.id ? "Edit transaction" : "New transaction",
-    `${typeSwitch(type)}<label class="entry-account-field">${icon("wallet")}<span>Account</span>${accountSelect(transactionAccountId(data, entry))}</label><label class="amount-field"><span>Amount <small>${esc(data.settings.currency)}</small></span><div><span class="amount-symbol">${esc(currency(data.settings.currency))}</span><input autofocus name="amount" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(entry.amount || "")}" required aria-label="Transaction amount"></div></label><div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div><label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details" ${entry.date && dayKey(entry.date) !== dayKey(new Date()) ? "open" : ""}><summary>${icon("sliders-horizontal")}Date & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
+    `${typeSwitch(type)}<label class="entry-account-field">${icon("wallet")}<span>Account</span>${accountSelect(transactionAccountId(data, entry))}</label>${calculatorFields(entry.amount)}<div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div><label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details" ${entry.date && dayKey(entry.date) !== dayKey(new Date()) ? "open" : ""}><summary>${icon("sliders-horizontal")}Date & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
     {
       subtitle: entry.id ? "EDIT TRANSACTION" : "A MOMENT FOR YOUR MONEY",
       className: "entry-sheet",
       submitLabel: entry.id ? "Save changes" : "Save transaction",
     },
   );
+  const amountInput = d.querySelector('[name="amount"]');
+  amountInput.setSelectionRange(
+    amountInput.value.length,
+    amountInput.value.length,
+  );
+  const calculationOutput = d.querySelector(".calculator-result");
+  function updateCalculation() {
+    try {
+      calculationOutput.textContent = money(
+        calculateAmount(amountInput.value || "0"),
+        data.settings.currency,
+      );
+      calculationOutput.classList.remove("invalid");
+    } catch (error) {
+      calculationOutput.textContent = error.message;
+      calculationOutput.classList.add("invalid");
+    }
+  }
+  function finishCalculation() {
+    try {
+      amountInput.value = calculateAmount(amountInput.value);
+      updateCalculation();
+    } catch (error) {
+      d.querySelector(".form-error").textContent = error.message;
+    }
+  }
+  amountInput.addEventListener("input", updateCalculation);
+  amountInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      finishCalculation();
+    }
+  });
+  d.querySelector(".calculator-keys").addEventListener("click", (event) => {
+    const key = event.target.closest("[data-calc-key]")?.dataset.calcKey;
+    if (!key) return;
+    if (key === "equals") {
+      finishCalculation();
+      return;
+    }
+    const start = amountInput.selectionStart ?? amountInput.value.length;
+    const end = amountInput.selectionEnd ?? start;
+    if (key === "clear") amountInput.value = "";
+    else if (key === "back")
+      amountInput.setRangeText(
+        "",
+        start === end ? Math.max(0, start - 1) : start,
+        end,
+        "end",
+      );
+    else if (amountInput.value.length < 120)
+      amountInput.setRangeText(key, start, end, "end");
+    amountInput.focus({ preventScroll: true });
+    updateCalculation();
+  });
+  updateCalculation();
   const picker = d.querySelector(".category-picker");
   picker.addEventListener("click", (e) => {
     const tile = e.target.closest("[data-pick-category]");
@@ -490,7 +572,7 @@ function entryDialog(entry = {}) {
       ...entry,
       id: entry.id || uid(),
       type: f.get("type"),
-      amount: parseAmount(f.get("amount")),
+      amount: parseAmount(calculateAmount(f.get("amount"))),
       category: f.get("category"),
       note: String(f.get("note")).trim(),
       accountId: f.get("accountId"),
@@ -1165,6 +1247,9 @@ app.addEventListener("click", async (event) => {
     switch (action) {
       case "navigate":
         navigate(view);
+        break;
+      case "add-income":
+        entryDialog({ type: "income" });
         break;
       case "add-entry":
         entryDialog(

@@ -115,6 +115,8 @@ function budgetRing(data, s) {
   return `<div class="budget-ring-wrap"><svg class="budget-ring" viewBox="0 0 144 144" aria-hidden="true"><circle cx="72" cy="72" r="59" class="ring-track"/><circle cx="72" cy="72" r="59" class="ring-value ${s.spent > s.total ? "over" : ""}" stroke-dasharray="${pct * 3.707} 370.7" transform="rotate(-90 72 72)"/></svg><div class="ring-label"><strong>${s.total ? `${Math.round(pct)}<small>%</small>` : "—"}</strong><span>${s.total ? "of budget used" : "No budget set yet"}</span></div></div>`;
 }
 
+const financeVignette = `<svg class="finance-vignette" viewBox="0 0 140 116" aria-hidden="true"><path d="M18 85h109" class="vignette-ground"/><rect x="37" y="18" width="63" height="78" rx="5" class="vignette-paper" transform="rotate(9 68 56)"/><path d="M53 34l31 5M51 44l20 3M49 55l31 5" class="vignette-lines"/><path d="M23 55l64-9a6 6 0 0 1 7 6v46H29a6 6 0 0 1-6-6z" class="vignette-wallet"/><path d="M24 62h70M84 75h18v17H84a8.5 8.5 0 0 1 0-17z" class="vignette-stitch"/><circle cx="88" cy="83.5" r="1.5" fill="currentColor"/><circle cx="111" cy="51" r="15" class="vignette-coin"/><path d="M111 43v16m-4-12h6a3 3 0 0 1 0 6h-6m0-3h6" class="vignette-lines"/></svg>`;
+
 export function homeView(ctx) {
   const { data } = ctx,
     now = new Date(),
@@ -157,7 +159,7 @@ export function homeView(ctx) {
     .filter((b) => !b.completed)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 2);
-  return `<div class="page-heading money-page-heading"><div><p class="eyebrow">${now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</p><h1>Your money, in view<span class="handwritten-dot">.</span></h1></div>${button("Add transaction", "add-entry", "plus", "button primary desktop-only")}</div>
+  return `<div class="page-heading money-page-heading"><div><p class="eyebrow">${now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</p><h1>Your money, in view<span class="handwritten-dot">.</span></h1></div>${financeVignette}${button("Add transaction", "add-entry", "plus", "button primary desktop-only")}</div>
   <div class="dashboard-grid"><div class="dashboard-main">
   <section class="daily-card balance-first"><div class="daily-heading"><span class="eyebrow">AVAILABLE THIS PERIOD</span>${button("Edit plan", "budget-dialog", "pencil-simple", "text-button")}</div><div class="daily-amount">${money(s.remaining, c)}</div><div class="budget-subline"><span>${money(s.spent, c)} spent of ${money(s.total, c)} this ${cycleName}</span><span>${s.remainingDays} ${s.remainingDays === 1 ? "day" : "days"} left</span></div>
   ${setup ? `<div class="setup-actions">${button("Set my budget", "budget-dialog", "arrow-right", "button primary")}${button("Explore a sample", "start-demo", "", "button plain")}</div>` : `<div class="budget-equation" role="group" aria-label="${data.settings.rollover === false ? "Fixed daily limit" : "Current daily spending limit"}"><span>${money(s.dailyPool, c)}</span><i>÷</i><span>${s.remainingDays} days</span><i>=</i><strong>${money(s.dailyPool / Math.max(1, s.remainingDays), c)}<small>/ day</small></strong></div>`}
@@ -183,7 +185,7 @@ export function homeView(ctx) {
           "Log an expense",
         )
   }</section>
-  <section class="panel">${panelHead("Recent income", `${money(m.income, c)} received this month`, button("All income", "view-activity", "arrow-right", "text-button"))}${recentIncome.length ? transactionList(data, recentIncome, { limit: 3, compact: true }) : empty("No income recorded yet", "Add an allowance, salary, or other money received.", "arrow-down-left", "add-entry", "Add income")}</section>
+  <section class="panel">${panelHead("Recent income", `${money(m.income, c)} received this month`, button("All income", "view-activity", "arrow-right", "text-button"))}${recentIncome.length ? transactionList(data, recentIncome, { limit: 3, compact: true }) : empty("No income recorded yet", "Add an allowance, salary, or other money received.", "arrow-down-left", "add-income", "Add income")}</section>
   <section class="panel quick-panel">${panelHead("Quick entries", "The usuals, without the extra taps.", button("New shortcut", "add-template", "plus", "text-button"))}<div class="shortcut-grid">${data.templates.length ? data.templates.map((t) => `<div class="shortcut"><button class="shortcut-log" data-action="quick-add" data-id="${esc(t.id)}">${categoryBadge(data, t.category)}<span><strong>${esc(t.name || t.category)}</strong><small>${money(t.amount, c)}</small></span></button>${iconButton(`Edit ${t.name || t.category} shortcut`, "edit-template", "dots-three", `data-id="${esc(t.id)}"`)}</div>`).join("") : `<button class="shortcut-placeholder" data-action="add-template">${icon("bookmark-simple")}<span>Save your coffee, commute, or lunch.<small>One tap next time.</small></span>${icon("plus")}</button>`}</div></section>
   <section class="panel">${panelHead("Spending this week", "Tap any day to open its entries.", button("Week view", "week-activity", "arrow-right", "text-button"))}${weekChart(data)}</section>
 
