@@ -1046,3 +1046,329 @@ textarea {
     right: 14px;
   }
 }
+
+/* Overview: a monthly summary, then the daily plan and individual pockets. */
+.overview-flow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.overview-flow > button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+  padding: 20px;
+  min-width: 0;
+  transition: border-color 0.15s;
+}
+.overview-flow > button:hover {
+  border-color: var(--accent);
+}
+.overview-flow > button > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.overview-flow small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.overview-flow strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 550;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+.flow-emblem {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--tint);
+  flex-shrink: 0;
+}
+.flow-emblem.expense {
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+}
+.overview-flow > button > .icon {
+  width: 15px;
+  color: var(--muted);
+}
+.account-glance {
+  display: none;
+}
+.entry-categories {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.entry-categories > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  list-style: none;
+  padding: 13px 14px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.entry-categories > summary::-webkit-details-marker {
+  display: none;
+}
+.entry-categories > summary > span {
+  color: var(--muted);
+}
+.entry-categories .chosen-category {
+  margin-left: auto;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.entry-categories > summary > .icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.entry-categories[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.entry-categories[open] > summary > .icon {
+  transform: rotate(90deg);
+}
+.entry-category-content {
+  padding: 14px;
+}
+.entry-category-content .field-heading {
+  margin-block: 16px 10px;
+}
+.entry-category-content .category-tile {
+  min-height: 78px;
+}
+.category-search-label {
+  display: grid;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.category-search-label input {
+  width: 100%;
+  min-width: 0;
+}
+.category-no-results {
+  grid-column: 1/-1;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 12px 0;
+}
+.entry-sheet .sheet-footer button {
+  display: flex;
+  gap: 9px;
+  width: 100%;
+}
+.entry-sheet .sheet-footer button > strong {
+  margin-left: auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.entry-sheet .sheet-footer button > span {
+  text-align: left;
+}
+.entry-sheet .sheet-footer .button > .icon {
+  flex-shrink: 0;
+}
+.subnav[aria-label="Plan sections"] {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow: visible;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+}
+.subnav[aria-label="Plan sections"] > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  white-space: normal;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 14px 10px;
+  min-height: 56px;
+}
+.subnav[aria-label="Plan sections"] > button.selected {
+  background: var(--tint);
+  border-color: var(--accent);
+}
+.subnav[aria-label="Plan sections"] > button > .icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+@media (max-width: 720px) {
+  .overview-flow {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .overview-flow > button {
+    padding: 14px 12px;
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+  .overview-flow small {
+    font-size: 10px;
+  }
+  .overview-flow strong {
+    font-size: clamp(17px, 5vw, 22px);
+    margin-top: 5px;
+  }
+  .overview-flow .flow-emblem {
+    width: 27px;
+    height: 27px;
+  }
+  .overview-flow .flow-emblem > .icon {
+    width: 17px;
+    height: 17px;
+  }
+  .overview-flow > button > .icon {
+    display: none;
+  }
+  .account-glance {
+    display: block;
+    min-width: 0;
+    padding-block: 2px;
+  }
+  .account-glance .panel-heading {
+    margin-bottom: 14px;
+    padding-bottom: 0;
+    border: 0;
+  }
+  .account-glance .panel-heading p {
+    font-size: 11px;
+  }
+  .account-rail {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding: 2px 1px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  .account-pocket {
+    flex: 0 0 158px;
+    min-width: 0;
+    scroll-snap-align: start;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--pocket-color);
+    border-radius: 9px;
+    background: var(--surface);
+    text-align: left;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .account-pocket .account-art {
+    width: 31px;
+    height: 31px;
+    margin-bottom: 3px;
+    border-radius: 9px;
+  }
+  .account-pocket .account-art > .icon {
+    width: 22px;
+    height: 22px;
+  }
+  .account-pocket > span:not(.account-art) {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .account-pocket > strong {
+    font-size: 18px;
+    font-weight: 550;
+    letter-spacing: -0.3px;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .account-pocket small {
+    color: var(--muted);
+    font-size: 10px;
+  }
+  .rail-transfer {
+    margin-top: 4px;
+    font-size: 11px;
+    min-height: 38px;
+  }
+  .dashboard-side > .accounts-panel {
+    display: none;
+  }
+  .subnav[aria-label="Plan sections"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .subnav[aria-label="Plan sections"] > button {
+    flex-direction: column;
+    gap: 7px;
+    font-size: 10px;
+    line-height: 1.3;
+    min-height: 76px;
+    padding: 12px 7px;
+  }
+  .settings-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    gap: 7px;
+    border-bottom: 0;
+  }
+  .settings-nav > button {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 10px;
+    white-space: normal;
+    line-height: 1.3;
+    padding: 12px 6px;
+    min-height: 70px;
+  }
+  .settings-nav > button.selected {
+    border-color: var(--accent);
+  }
+  .settings-nav > button > .icon {
+    width: 20px;
+    height: 20px;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 28;
+  }
+  .topbar .top-install {
+    display: none;
+  }
+  .mobile-add {
+    top: 16px;
+    bottom: auto;
+    right: 64px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    box-shadow: none;
+    z-index: 29;
+  }
+  .mobile-add > .icon {
+    width: 22px;
+    height: 22px;
+  }
+}

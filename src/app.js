@@ -415,8 +415,12 @@ function entryDialog(entry = {}) {
       ...categoryNames(data, type),
     ]),
   ];
+  let categoryQuery = "";
   const tiles = () =>
     choices()
+      .filter((name) =>
+        name.toLowerCase().includes(categoryQuery.toLowerCase()),
+      )
       .map(
         (name) =>
           `<button type="button" class="category-tile ${selected === name ? "selected" : ""}" data-pick-category="${esc(name)}" aria-pressed="${selected === name}">${categoryBadge(data, name, type)}<span>${esc(name)}</span></button>`,
@@ -424,7 +428,7 @@ function entryDialog(entry = {}) {
       .join("");
   const d = modal(
     entry.id ? "Edit transaction" : "New transaction",
-    `${typeSwitch(type)}<label class="entry-account-field">${icon("wallet")}<span>Account</span>${accountSelect(transactionAccountId(data, entry))}</label>${calculatorFields(entry.amount)}<div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div><label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details" ${entry.date && dayKey(entry.date) !== dayKey(new Date()) ? "open" : ""}><summary>${icon("sliders-horizontal")}Date & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
+    `${typeSwitch(type)}<label class="entry-account-field">${icon("wallet")}<span>Account</span>${accountSelect(transactionAccountId(data, entry))}</label><details class="entry-categories"><summary><span>Category</span><strong class="chosen-category">${esc(selected)}</strong>${icon("caret-right")}</summary><div class="entry-category-content"><label class="category-search-label">Find a category<input type="search" id="entry-category-search" placeholder="Search categories…" autocomplete="off"></label><div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div></div></details>${calculatorFields(entry.amount)}<label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details" ${entry.date && dayKey(entry.date) !== dayKey(new Date()) ? "open" : ""}><summary>${icon("sliders-horizontal")}Date & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
     {
       subtitle: entry.id ? "EDIT TRANSACTION" : "A MOMENT FOR YOUR MONEY",
       className: "entry-sheet",
@@ -444,9 +448,13 @@ function entryDialog(entry = {}) {
         data.settings.currency,
       );
       calculationOutput.classList.remove("invalid");
+      d.querySelector(".sheet-footer button").innerHTML =
+        `${icon("check")}<span>${entry.id ? "Save changes" : type === "income" ? "Save income" : "Save expense"}</span><strong>${calculationOutput.textContent}</strong>`;
     } catch (error) {
       calculationOutput.textContent = error.message;
       calculationOutput.classList.add("invalid");
+      d.querySelector(".sheet-footer button").innerHTML =
+        `${icon("check")}<span>${entry.id ? "Save changes" : type === "income" ? "Save income" : "Save expense"}</span><strong>—</strong>`;
     }
   }
   function finishCalculation() {
@@ -457,7 +465,10 @@ function entryDialog(entry = {}) {
       d.querySelector(".form-error").textContent = error.message;
     }
   }
-  amountInput.addEventListener("input", updateCalculation);
+  amountInput.addEventListener("input", () => {
+    d.querySelector(".form-error").textContent = "";
+    updateCalculation();
+  });
   amountInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -467,6 +478,7 @@ function entryDialog(entry = {}) {
   d.querySelector(".calculator-keys").addEventListener("click", (event) => {
     const key = event.target.closest("[data-calc-key]")?.dataset.calcKey;
     if (!key) return;
+    d.querySelector(".form-error").textContent = "";
     if (key === "equals") {
       finishCalculation();
       return;
@@ -488,20 +500,34 @@ function entryDialog(entry = {}) {
   });
   updateCalculation();
   const picker = d.querySelector(".category-picker");
+  const categoryDetails = d.querySelector(".entry-categories");
+  const categorySearch = d.querySelector("#entry-category-search");
+  categorySearch.addEventListener("input", () => {
+    categoryQuery = categorySearch.value;
+    picker.innerHTML =
+      tiles() ||
+      '<p class="category-no-results">No matching categories. Try another name or create one below.</p>';
+  });
   picker.addEventListener("click", (e) => {
     const tile = e.target.closest("[data-pick-category]");
     if (!tile) return;
     selected = tile.dataset.pickCategory;
     d.querySelector('[name="category"]').value = selected;
     picker.innerHTML = tiles();
+    d.querySelector(".chosen-category").textContent = selected;
+    categoryDetails.open = false;
+    categoryDetails.querySelector("summary").focus();
   });
   d.querySelectorAll('[name="type"]').forEach(
     (r) =>
       (r.onchange = () => {
         type = r.value;
         selected = categoryNames(data, type)[0];
+        categoryQuery = categorySearch.value = "";
+        d.querySelector(".chosen-category").textContent = selected;
         d.querySelector('[name="category"]').value = selected;
         picker.innerHTML = tiles();
+        updateCalculation();
       }),
   );
   d.querySelector("#entry-new-category").onclick = () => {
@@ -1262,6 +1288,21 @@ app.addEventListener("click", async (event) => {
         entryDialog(data.transactions.find((t) => t.id === id));
         break;
       case "view-activity":
+        navigate("transactions");
+        break;
+      case "income-activity":
+      case "month-flow":
+        ctx.activityPeriod = action === "income-activity" ? "all" : "month";
+        ctx.activityDate = dayKey(new Date());
+        ctx.filters = {
+          type: action === "income-activity" ? "income" : value,
+          query: "",
+          category: "",
+          method: "",
+          from: "",
+          to: "",
+          accountId: "",
+        };
         navigate("transactions");
         break;
       case "view-bills":
