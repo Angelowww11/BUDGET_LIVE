@@ -1,8 +1,11 @@
 import { paydayFields, salaryFields, updatePaydayFields } from "./payday-ui.js";
 import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
+import "@fontsource-variable/instrument-sans/standard.css";
+import "@fontsource/instrument-serif/latin.css";
+import "@fontsource/instrument-serif/latin-italic.css";
 import "./app.css";
-import "./refined.css";
+import "./planner.css";
 import { calculateAmount } from "./calculator.js";
 import {
   budgetSummary,

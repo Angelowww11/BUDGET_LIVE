@@ -7,8 +7,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f1f2ef",
-  "theme_color": "#f1f2ef",
+  "background_color": "#edf1ef",
+  "theme_color": "#edf1ef",
   "categories": ["finance", "productivity"],
   "prefer_related_applications": false,
   "icons": [

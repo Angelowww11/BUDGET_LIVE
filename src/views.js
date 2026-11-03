@@ -1,4 +1,5 @@
 import { paydayFields, salaryFields } from "./payday-ui.js";
+import { plannerOverview } from "./planner.js";
 import {
   budgetSummary,
   budgetFromAvailableBalance,
@@ -10,13 +11,8 @@ import {
 import { categoryNames, categoryMeta, categoryBadge } from "./categories.js";
 import { icon } from "./icons.js";
 import { colorMode, themeSwatch } from "./appearance.js";
-import {
-  accountsPanel,
-  accountsView,
-  entryAccountLabel,
-  accountArtwork,
-} from "./accounts-ui.js";
-import { accountSummary, accountTypes } from "./accounts.js";
+import { accountsView, entryAccountLabel } from "./accounts-ui.js";
+import { accountSummary } from "./accounts.js";
 import { journalRange, journalItems } from "./journal.js";
 import {
   total,
@@ -116,8 +112,6 @@ function budgetRing(data, s) {
   return `<div class="budget-ring-wrap"><svg class="budget-ring" viewBox="0 0 144 144" aria-hidden="true"><circle cx="72" cy="72" r="59" class="ring-track"/><circle cx="72" cy="72" r="59" class="ring-value ${s.spent > s.total ? "over" : ""}" stroke-dasharray="${pct * 3.707} 370.7" transform="rotate(-90 72 72)"/></svg><div class="ring-label"><strong>${s.total ? `${Math.round(pct)}<small>%</small>` : "—"}</strong><span>${s.total ? "of budget used" : "No budget set yet"}</span></div></div>`;
 }
 
-const financeVignette = `<svg class="finance-vignette" viewBox="0 0 140 116" aria-hidden="true"><path d="M18 85h109" class="vignette-ground"/><rect x="37" y="18" width="63" height="78" rx="5" class="vignette-paper" transform="rotate(9 68 56)"/><path d="M53 34l31 5M51 44l20 3M49 55l31 5" class="vignette-lines"/><path d="M23 55l64-9a6 6 0 0 1 7 6v46H29a6 6 0 0 1-6-6z" class="vignette-wallet"/><path d="M24 62h70M84 75h18v17H84a8.5 8.5 0 0 1 0-17z" class="vignette-stitch"/><circle cx="88" cy="83.5" r="1.5" fill="currentColor"/><circle cx="111" cy="51" r="15" class="vignette-coin"/><path d="M111 43v16m-4-12h6a3 3 0 0 1 0 6h-6m0-3h6" class="vignette-lines"/></svg>`;
-
 export function homeView(ctx) {
   const { data } = ctx,
     now = new Date(),
@@ -139,12 +133,7 @@ export function homeView(ctx) {
   const recentIncome = data.transactions
     .filter((t) => t.type === "income" && new Date(t.date) <= now)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
-  const pairs = categoryTotals(todayEntries),
-    setup = s.total === 0;
-  const salary = salaryBounds(data.settings),
-    salaryDays = salarySlots(data.settings)
-      .map((slot) => dayOrdinal(slot.day))
-      .join(" & ");
+  const pairs = categoryTotals(todayEntries);
   const cycleName =
     data.settings.cycle === "salary"
       ? "salary period"
@@ -155,20 +144,11 @@ export function homeView(ctx) {
           : data.settings.cycle === "weekly"
             ? "week"
             : "2 weeks";
-  const adjusted = Math.abs(s.safePerDay - s.baseDaily) > 0.005;
   const upcoming = [...data.bills]
     .filter((b) => !b.completed)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .slice(0, 2);
-  return `<div class="page-heading money-page-heading"><div><p class="eyebrow">${now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</p><h1>Your money, in view<span class="handwritten-dot">.</span></h1></div>${financeVignette}${button("Add transaction", "add-entry", "plus", "button primary desktop-only")}</div>
-  <div class="overview-flow" aria-label="This month’s cash flow"><button data-action="month-flow" data-value="income"><span class="flow-emblem income">${icon("arrow-down-left")}</span><span><small>Income this month</small><strong>${money(m.income, c)}</strong></span>${icon("caret-right")}</button><button data-action="month-flow" data-value="expense"><span class="flow-emblem expense">${icon("arrow-up-right")}</span><span><small>Spent this month</small><strong>${money(m.expense, c)}</strong></span>${icon("caret-right")}</button></div>
-  <div class="dashboard-grid"><div class="dashboard-main">
-  <section class="daily-card balance-first"><div class="daily-heading"><span class="eyebrow">AVAILABLE THIS PERIOD</span>${button("Edit plan", "budget-dialog", "pencil-simple", "text-button")}</div><div class="daily-amount">${money(s.remaining, c)}</div><div class="budget-subline"><span>${money(s.spent, c)} spent of ${money(s.total, c)} this ${cycleName}</span><span>${s.remainingDays} ${s.remainingDays === 1 ? "day" : "days"} left</span></div>
-  ${setup ? `<div class="setup-actions">${button("Set my budget", "budget-dialog", "arrow-right", "button primary")}${button("Explore a sample", "start-demo", "", "button plain")}</div>` : `<div class="budget-equation" role="group" aria-label="${data.settings.rollover === false ? "Fixed daily limit" : "Current daily spending limit"}"><span>${money(s.dailyPool, c)}</span><i>÷</i><span>${s.remainingDays} days</span><i>=</i><strong>${money(s.dailyPool / Math.max(1, s.remainingDays), c)}<small>/ day</small></strong></div>`}
-  ${data.settings.cycle === "salary" && salary ? `<div class="payday-summary salary-summary">${icon("briefcase")}<span><strong>Next salary<br>${salary.end.toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}</strong><small>${salary.next.amount ? money(salary.next.amount, c) : "Amount not set"} · ${salaryDays} each month</small></span>${button("Change paydays", "edit-salary", "", "text-button")}</div>` : data.settings.cycle === "payday" ? `<div class="payday-summary">${icon("calendar-dots")}<span><strong>${s.active ? "Next allowance" : new Date() < s.start ? "Budget starts" : "Allowance date reached"}<br>${(new Date() < s.start ? s.start : s.end).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}</strong><small>${s.active ? `${s.remainingDays} spending days left, including today` : "Edit your plan to set the money and dates for your next allowance."}</small></span>${button("Change dates", "budget-dialog", "", "text-button")}</div>` : ""}<div class="today-budget-grid"><div><span>${adjusted ? "Adjusted limit today" : "Daily budget"}</span><strong>${money(s.safePerDay, c)}</strong></div><div><span>Spent today</span><strong class="${s.todaySpent > s.safePerDay ? "expense" : ""}">${money(s.todaySpent, c)}</strong></div><div class="today-left"><span>Left to spend today</span><strong>${money(s.leftToday, c)}</strong></div></div>${progress(s.todaySpent, s.safePerDay, "Today’s budget used", s.percent >= 0.8)}
-  ${!setup ? `<p class="allowance-note">${icon(data.settings.rollover ? "arrows-clockwise" : "calendar-blank")}${data.settings.rollover ? `Flexible rollover is on. Unspent money is shared across the ${s.remainingDays} remaining days.` : `Fixed daily cap: ${money(s.baseDaily, c)}. Available funds are also spread over the days left.`}${button(data.settings.rollover ? "Use fixed limit" : "Change", data.settings.rollover ? "fixed-daily-limit" : "budget-dialog", "", "text-button")}</p>` : ""}
-  <button class="overview-account-link" data-action="view-accounts">${icon("wallet")}<span>Overall account balance <strong>${money(accounts.total, c)}</strong></span>${icon("caret-right")}</button></section>
-  <section class="account-glance" aria-label="Account balances">${panelHead("Your accounts", "Cash, banks, and money set aside.", button("Manage", "view-accounts", "arrow-right", "text-button"))}<div class="account-rail" tabindex="0" aria-label="Scroll through accounts">${accounts.accounts.map((a) => `<button class="account-pocket" data-action="account-activity" data-id="${esc(a.id)}" style="--pocket-color:${accountTypes[a.type]?.color || "var(--accent)"}">${accountArtwork(a)}<span>${esc(a.name)}</span><strong>${money(a.balance, c)}</strong><small>${a.includeInSpending ? "For spending" : "Set aside"}</small></button>`).join("")}</div>${button("Move between accounts", "transfer", "arrows-clockwise", "text-button rail-transfer")}</section>
+  return `${plannerOverview(data, s, accounts, m, now, cycleName)}<div class="dashboard-grid"><div class="dashboard-main">
   <section class="panel today-spending-panel">${panelHead("Today’s spending", `${todayEntries.length} ${todayEntries.length === 1 ? "expense" : "expenses"} · ${money(s.todaySpent, c)} spent`, button("Day view", "today-activity", "arrow-right", "text-button"))}${
     pairs.length
       ? `<div class="today-category-tags">${pairs
@@ -192,7 +172,7 @@ export function homeView(ctx) {
   <section class="panel quick-panel">${panelHead("Quick entries", "The usuals, without the extra taps.", button("New shortcut", "add-template", "plus", "text-button"))}<div class="shortcut-grid">${data.templates.length ? data.templates.map((t) => `<div class="shortcut"><button class="shortcut-log" data-action="quick-add" data-id="${esc(t.id)}">${categoryBadge(data, t.category)}<span><strong>${esc(t.name || t.category)}</strong><small>${money(t.amount, c)}</small></span></button>${iconButton(`Edit ${t.name || t.category} shortcut`, "edit-template", "dots-three", `data-id="${esc(t.id)}"`)}</div>`).join("") : `<button class="shortcut-placeholder" data-action="add-template">${icon("bookmark-simple")}<span>Save your coffee, commute, or lunch.<small>One tap next time.</small></span>${icon("plus")}</button>`}</div></section>
   <section class="panel">${panelHead("Spending this week", "Tap any day to open its entries.", button("Week view", "week-activity", "arrow-right", "text-button"))}${weekChart(data)}</section>
 
-  </div><aside class="dashboard-side" aria-label="Accounts and budget summary">${accountsPanel(data)}
+  </div><aside class="dashboard-side" aria-label="Budget and upcoming payments">
   <section class="panel period-mini-panel">${panelHead(`This ${cycleName}’s budget`)}${budgetRing(data, s)}<div class="key-value"><span>Starting budget</span><strong>${money(s.total, c)}</strong></div><div class="key-value"><span>Spent so far</span><strong>${money(s.spent, c)}</strong></div><div class="key-value"><span>Still available</span><strong>${money(s.remaining, c)}</strong></div><div class="panel-note">${icon("calendar-dots")}<span>${money(s.baseDaily, c)} × ${s.days} days in this period.</span></div></section>
   <section class="panel cashflow-panel">${panelHead("This month’s flow")}<div class="flow-item"><span class="flow-icon income">${icon("arrow-down-left")}</span><span>Money in</span><strong>${money(m.income, c)}</strong></div><div class="flow-item"><span class="flow-icon expense">${icon("arrow-up-right")}</span><span>Money out</span><strong>${money(m.expense, c)}</strong></div><div class="key-value flow-net"><span>Net this month</span><strong>${money(m.net, c)}</strong></div></section>
   <section class="panel">${panelHead("On the horizon", "", button("Plan", "view-bills", "arrow-right", "text-button"))}${upcoming.length ? upcoming.map((b) => billRow(data, b, true)).join("") : `<div class="mini-empty">${icon("calendar-dots")}<p>Make room for what’s coming.</p>${button("Add a bill", "add-bill", "plus", "text-button")}</div>`}</section></aside></div>`;
