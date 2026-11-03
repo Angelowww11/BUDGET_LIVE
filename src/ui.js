@@ -58,7 +58,7 @@ export const dayOrdinal = (day) => {
   const suffix =
     n % 100 >= 11 && n % 100 <= 13
       ? "th"
-      : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+      : { 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th";
   return `${n}${suffix}`;
 };
-export const logo = `<svg class="brand-symbol" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="13" fill="currentColor"/><path d="M12 26V15h5v11m6 0V11h5v15" stroke="var(--on-accent)" stroke-width="3.2" stroke-linecap="round"/><path d="M10 30h20" stroke="var(--on-accent)" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/></svg>`;
+export const logo = `<svg class="brand-symbol" viewBox="0 0 40 44" aria-hidden="true"><path d="M6 3h28v38l-14-5-14 5z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 28V13l8 9 8-9v15" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;

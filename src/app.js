@@ -2,6 +2,7 @@ import { paydayFields, salaryFields, updatePaydayFields } from "./payday-ui.js";
 import "@fontsource-variable/dm-sans/standard.css";
 import "@fontsource-variable/manrope";
 import "./app.css";
+import "./refined.css";
 import {
   budgetSummary,
   budgetFromAvailableBalance,
@@ -134,7 +135,7 @@ function render() {
     stats: insightsView,
     settings: settingsView,
   }[ctx.view];
-  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="Daylight overview">${logo}<span>daylight<small>A LITTLE MORE PEACE OF MIND</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take Daylight with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>daylight</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}" title="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}">${icon(colorMode(data.settings) === "dark" ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>Made for the everyday.</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
+  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="M.Y.M.P. overview">${logo}<span>M.Y.M.P.<small>PERSONAL FINANCE</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `${index === 2 ? `<button class="nav-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}<span>Add</span></button>` : ""}<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take M.Y.M.P. with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>M.Y.M.P.</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}" title="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}">${icon(colorMode(data.settings) === "dark" ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>M.Y.M.P. · Personal finance</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
 }
 
 function renderRecovery() {
@@ -396,7 +397,7 @@ function entryDialog(entry = {}) {
       )
       .join("");
   const d = modal(
-    entry.id ? "A closer look." : "What’s the story?",
+    entry.id ? "Edit transaction" : "New transaction",
     `${typeSwitch(type)}<label class="entry-account-field">${icon("wallet")}<span>Account</span>${accountSelect(transactionAccountId(data, entry))}</label><label class="amount-field"><span>Amount <small>${esc(data.settings.currency)}</small></span><div><span class="amount-symbol">${esc(currency(data.settings.currency))}</span><input autofocus name="amount" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${esc(entry.amount || "")}" required aria-label="Transaction amount"></div></label><div class="field-heading"><strong>Choose a category</strong><button type="button" class="text-button" id="entry-new-category">New category</button></div><input type="hidden" name="category" value="${esc(selected)}"><div class="category-picker" role="group" aria-label="Transaction categories">${tiles()}</div><label>Note <span class="optional">optional</span><input name="note" placeholder="Coffee with a friend, grocery run…" maxlength="160" value="${esc(entry.note || "")}"></label><details class="entry-details" ${entry.date && dayKey(entry.date) !== dayKey(new Date()) ? "open" : ""}><summary>${icon("sliders-horizontal")}Date & tags${icon("caret-right")}</summary><div class="form-row"><label>Date<input type="date" name="date" required value="${esc(entry.date ? dayKey(entry.date) : dayKey(new Date()))}"></label></div><label>Tags <span class="optional">comma separated</span><input name="tags" placeholder="work, weekend, shared" maxlength="240" value="${esc((entry.tags || []).join(", "))}"></label></details>${entry.id ? `<div class="entry-more-actions">${button("Save as shortcut", "unused", "bookmark-simple", "button small soft", 'id="entry-shortcut"')}${button("Duplicate", "unused", "copy", "button small soft", 'id="entry-duplicate"')}<button type="button" id="entry-delete" class="button small danger">${icon("trash")}Delete</button></div>` : ""}`,
     {
       subtitle: entry.id ? "EDIT TRANSACTION" : "A MOMENT FOR YOUR MONEY",
@@ -808,7 +809,7 @@ function categoryDialog(
 
 function budgetDialog() {
   const d = modal(
-    "Give your spending a plan.",
+    "Spending plan",
     `<label>Plan for this period<input autofocus name="budget" inputmode="decimal" required value="${esc(data.settings.budgetSource === "accounts" ? budgetFromAvailableBalance(data.settings, data.transactions, accountSummary(data).spendable) : data.settings.budget || "")}" placeholder="8000"></label>${data.settings.budgetSource === "accounts" ? '<input type="hidden" name="useAccountFunds" value="1"><p class="small muted">Following your spending accounts. Income, expenses, and deletions update this plan automatically.</p>' : ""}${accountSummary(data).spendable > 0 ? '<button type="button" class="text-button" id="use-account-funds">Set plan from money left in accounts</button>' : ""}<div class="form-row"><label>Currency<select name="currency">${["PHP", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "INR"].map((c) => `<option ${c === data.settings.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Period<select name="cycle">${[
       ["monthly", "Monthly"],
       ["payday", "Until next allowance / income"],
@@ -961,7 +962,7 @@ function monthlyBillDialog(bill = {}) {
     Number(bill.anchorDay) ||
     (bill.dueDate ? localDate(bill.dueDate).getDate() : new Date().getDate());
   const d = modal(
-    editing ? "Keep the monthly rhythm." : "A monthly bill, handled.",
+    editing ? "Edit monthly bill" : "New monthly bill",
     `<label>Name<input name="name" required maxlength="60" value="${esc(bill.name || "")}" placeholder="Streaming, internet, rent"></label><div class="form-row"><label>Amount<input name="amount" inputmode="decimal" required value="${esc(bill.amount || "")}" placeholder="0.00"></label><label>Due day <span class="optional">of each month</span><input type="number" name="dueDay" min="1" max="31" step="1" inputmode="numeric" required value="${esc(dueDay)}"></label></div><label>Category${categorySelect("expense", bill.category || "Subscriptions")}</label><label>Account${accountSelect(transactionAccountId(data, bill))}</label><p class="small muted">In months without this date, it falls on the last day. Nothing is logged automatically — use <strong>Mark paid</strong> when it happens.</p>${editing ? '<button type="button" class="button danger small" id="delete-monthly-bill">Delete monthly bill</button>' : ""}`,
     {
       subtitle: "MONTHLY BILL",
@@ -1033,7 +1034,7 @@ function restoreDialog(next) {
   formSubmit(d, () => {
     if (!storageProblem)
       download(
-        `daylight-before-restore-${dayKey(new Date())}.backup.json`,
+        `mymp-before-restore-${dayKey(new Date())}.backup.json`,
         backup(ctx.demo ? demoOriginal : data),
       );
     save(next, { replace: true });
@@ -1062,7 +1063,7 @@ function resetDialog() {
     if (ctx.demo)
       throw new Error("Leave the sample before resetting your data.");
     download(
-      `daylight-before-reset-${dayKey(new Date())}.backup.json`,
+      `mymp-before-reset-${dayKey(new Date())}.backup.json`,
       backup(data),
     );
     data = save(emptyState());
@@ -1485,7 +1486,7 @@ app.addEventListener("click", async (event) => {
         break;
       case "export-backup":
         download(
-          `daylight-${ctx.demo ? "sample-" : ""}${dayKey(new Date())}.backup.json`,
+          `mymp-${ctx.demo ? "sample-" : ""}${dayKey(new Date())}.backup.json`,
           backup(data),
         );
         if (!ctx.demo) {
@@ -1539,7 +1540,7 @@ app.addEventListener("click", async (event) => {
           )
           .join("\r\n");
         download(
-          `daylight-${dayKey(new Date())}.csv`,
+          `mymp-${dayKey(new Date())}.csv`,
           "\uFEFF" + csv,
           "text/csv;charset=utf-8",
         );
@@ -1554,7 +1555,7 @@ app.addEventListener("click", async (event) => {
         break;
       case "download-raw":
         download(
-          "daylight-saved-records.json",
+          "mymp-saved-records.json",
           localStorage.getItem(STORAGE_KEY) || "{}",
         );
         break;

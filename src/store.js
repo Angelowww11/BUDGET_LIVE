@@ -89,7 +89,7 @@ export function normalize(value) {
   if (!value.settings || typeof value.settings !== "object")
     throw new Error("Budget settings are missing.");
   if (value.version && value.version > 1)
-    throw new Error("This backup needs a newer version of Daylight.");
+    throw new Error("This backup needs a newer version of M.Y.M.P.");
   const base = emptyState();
   const next = {
     ...base,
@@ -301,12 +301,12 @@ export function restore(text) {
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new Error("Choose a valid Daylight JSON backup.");
+    throw new Error("Choose a valid M.Y.M.P. JSON backup.");
   }
   if (
     parsed.app !== "daylight-budget" ||
     !Array.isArray(parsed.data?.transactions)
   )
-    throw new Error("This is not a Daylight Budget backup.");
+    throw new Error("This is not a M.Y.M.P. backup.");
   return normalize(parsed.data);
 }

@@ -87,6 +87,6 @@ test("invalid backups are rejected before a replacement can be saved", () => {
   const invalid = legacy();
   invalid.transactions[0].amount = -1;
   assert.throws(() => restore(backup(invalid)), /transactions are invalid/);
-  assert.throws(() => restore('{"app":"other"}'), /not a Daylight/);
+  assert.throws(() => restore('{"app":"other"}'), /not a M\.Y\.M\.P\./);
   assert.deepEqual(normalize(emptyState()).transactions, []);
 });

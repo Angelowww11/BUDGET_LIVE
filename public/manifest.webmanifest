@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "Daylight Budget",
-  "short_name": "Daylight",
+  "name": "M.Y.M.P.",
+  "short_name": "M.Y.M.P.",
   "description": "Your private daily budget, expense journal, and savings planner. Works offline.",
   "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f6f4",
-  "theme_color": "#f5f6f4",
+  "background_color": "#f1f2ef",
+  "theme_color": "#f1f2ef",
   "categories": ["finance", "productivity"],
   "prefer_related_applications": false,
   "icons": [
@@ -36,7 +36,12 @@
       "name": "Add transaction",
       "short_name": "Add entry",
       "url": "./?action=add",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

@@ -5317,3 +5317,79 @@ select {
     gap: 5px;
   }
 }
+
+/* Keep money, dates, and their actions on the same visual columns. */
+@media (max-width: 720px) {
+  .panel-heading > div:first-child {
+    min-width: 0;
+  }
+  .panel-heading > .text-button {
+    white-space: nowrap;
+  }
+  .account-row {
+    display: grid;
+    grid-template-columns: 35px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .account-row > b {
+    text-align: right;
+  }
+  .bill-row {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .bill-row > .bill-actions {
+    grid-column: 2 / -1;
+    padding-left: 0;
+    justify-content: flex-end;
+  }
+  .topbar {
+    gap: 10px;
+  }
+  .mobile-brand {
+    min-width: 0;
+  }
+  .mobile-brand > span {
+    font-size: clamp(17px, 5vw, 22px);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 420px) {
+  .budget-equation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.8fr) auto minmax(
+        0,
+        1.3fr
+      );
+    align-items: baseline;
+    gap: 5px;
+  }
+  .budget-equation > span:first-child,
+  .budget-equation > span:nth-child(3) {
+    white-space: nowrap;
+  }
+  .budget-equation > strong {
+    text-align: right;
+    white-space: nowrap;
+    font-size: clamp(15px, 4.5vw, 20px);
+  }
+  .budget-equation small {
+    display: block;
+    margin: 0;
+    text-align: right;
+  }
+  .today-budget-grid > div:nth-child(2),
+  .today-budget-grid > div:nth-child(3) {
+    min-width: 0;
+  }
+  .today-budget-grid > div:nth-child(3) {
+    text-align: right;
+  }
+  .account-row > b {
+    font-size: 12px;
+  }
+  .accounts-total > strong {
+    font-size: 28px;
+  }
+}
