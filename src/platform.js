@@ -1,4 +1,9 @@
-import { Capacitor, SystemBars, SystemBarsStyle } from "@capacitor/core";
+import {
+  Capacitor,
+  SystemBars,
+  SystemBarsStyle,
+  registerPlugin,
+} from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
@@ -10,11 +15,18 @@ export const ANDROID_DOWNLOAD =
   "https://github.com/Angelowww11/BUDGET_LIVE/releases/latest/download/MYMP-Android.apk";
 export const RELEASES_URL =
   "https://github.com/Angelowww11/BUDGET_LIVE/releases";
-let lastMode;
+const WindowAppearance = registerPlugin("WindowAppearance");
+let lastAppearance;
 
 export function updateNativeAppearance(mode) {
-  if (!isNativeApp || mode === lastMode) return;
-  lastMode = mode;
+  if (!isNativeApp) return;
+  const background = getComputedStyle(document.documentElement)
+    .getPropertyValue("--page")
+    .trim();
+  const appearance = `${mode}:${background}`;
+  if (appearance === lastAppearance) return;
+  lastAppearance = appearance;
+  WindowAppearance.setBackground({ color: background }).catch(() => {});
   SystemBars.setStyle({
     style: mode === "dark" ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
   }).catch(() => {});
