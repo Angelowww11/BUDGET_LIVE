@@ -1,0 +1,29 @@
+{
+  "appId": "com.angelowww11.mymp",
+  "appName": "M.Y.M.P.",
+  "webDir": "dist-native",
+  "backgroundColor": "#edf1ef",
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false,
+    "minWebViewVersion": 119
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#234f50",
+      "showSpinner": false,
+      "launchShowDuration": 1200
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover",
+      "style": "LIGHT"
+    }
+  }
+}

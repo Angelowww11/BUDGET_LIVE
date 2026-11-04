@@ -1,0 +1,337 @@
+/* Installation, device safe areas, and finished application states. */
+:root {
+  --app-safe-top: 0px;
+}
+:root[data-platform="native"] {
+  --app-safe-top: env(safe-area-inset-top, 0px);
+}
+@media (display-mode: standalone) {
+  :root {
+    --app-safe-top: env(safe-area-inset-top, 0px);
+  }
+}
+body {
+  padding-top: var(--app-safe-top);
+}
+.app-shell {
+  min-height: 100dvh;
+}
+.app-center {
+  display: grid;
+  gap: 20px;
+}
+.app-identity {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 26px;
+  background: var(--cover);
+  color: var(--cover-ink);
+  border-radius: 22px;
+}
+.app-identity > img {
+  border-radius: 18px;
+  box-shadow: 0 0 0 1px #ffffff25;
+  flex-shrink: 0;
+}
+.app-identity > div {
+  flex: 1;
+  min-width: 0;
+}
+.app-identity .eyebrow {
+  color: var(--cover-muted);
+  font-size: 8px;
+  margin-bottom: 7px;
+}
+.app-identity h2 {
+  font-size: 29px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.app-identity p:not(.eyebrow) {
+  font-size: 11px;
+  color: var(--cover-muted);
+  margin-top: 4px;
+}
+.app-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid #ffffff26;
+  border-radius: 30px;
+  font-size: 10px;
+  background: #ffffff0a;
+}
+.app-state-badge > .icon {
+  width: 16px;
+  height: 16px;
+}
+.app-health {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.app-health > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  min-width: 0;
+}
+.app-health > div > .icon {
+  width: 27px;
+  height: 27px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.app-health strong,
+.app-health small {
+  display: block;
+}
+.app-health strong {
+  font-size: 12px;
+  font-weight: 550;
+}
+.app-health small {
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.app-center-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.app-update-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.app-update-row small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.app-installed-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+.app-installed-note > .icon {
+  color: var(--accent);
+}
+.app-help-note {
+  margin-top: 19px;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.app-migration {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.app-migration li {
+  padding-left: 4px;
+  margin-bottom: 7px;
+}
+.app-migration li::marker {
+  color: var(--accent);
+  font-weight: 650;
+}
+.app-backup-actions {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-wrap: wrap;
+  margin-block: 17px;
+}
+.app-backup-card > p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.android-download {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--tint);
+}
+.android-download > div:not(.app-download-emblem) {
+  flex: 1;
+  min-width: 0;
+}
+.android-download .eyebrow {
+  font-size: 8px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.android-download h2 {
+  font-size: 22px;
+  font-weight: 550;
+  letter-spacing: -0.4px;
+}
+.android-download p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 7px;
+  max-width: 55ch;
+}
+.android-download small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 9px;
+}
+.app-download-emblem {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 66px;
+  flex-shrink: 0;
+  background: var(--surface);
+  color: var(--accent);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  transform: rotate(-4deg);
+}
+.app-download-emblem > .icon {
+  width: 35px;
+  height: 35px;
+}
+.install-method {
+  border-top: 1px solid var(--line);
+  padding-block: 4px;
+}
+.install-method > summary {
+  cursor: pointer;
+  padding: 13px 0;
+  font-size: 12px;
+  font-weight: 550;
+}
+.install-method > p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  padding: 0 0 13px 16px;
+  max-width: 75ch;
+}
+.app-center .button {
+  white-space: normal;
+  text-align: center;
+}
+form[aria-busy="true"] button[type="submit"] {
+  opacity: 0.65;
+  cursor: progress;
+}
+@media (max-width: 960px) {
+  .app-center-grid {
+    grid-template-columns: 1fr;
+  }
+  .android-download {
+    flex-wrap: wrap;
+  }
+  .android-download > .button {
+    margin-left: auto;
+  }
+}
+@media (max-width: 720px) {
+  .topbar {
+    top: var(--app-safe-top);
+  }
+  .mobile-add {
+    top: calc(16px + var(--app-safe-top));
+  }
+  .sheet {
+    max-height: calc(
+      100dvh - var(--app-safe-top) - env(safe-area-inset-bottom) - 18px
+    );
+  }
+  .sheet > form {
+    max-height: inherit;
+  }
+  .app-center {
+    gap: 16px;
+  }
+  .app-identity {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding: 22px 20px;
+    gap: 15px;
+    flex-wrap: wrap;
+    border-radius: 19px;
+  }
+  .app-identity > img {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+  }
+  .app-identity h2 {
+    font-size: 25px;
+  }
+  .app-identity .eyebrow {
+    font-size: 7px;
+    line-height: 1.7;
+  }
+  .app-identity p:not(.eyebrow) {
+    font-size: 10px;
+  }
+  .app-state-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: 2px;
+    font-size: 9px;
+  }
+  .app-health {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .app-health > div {
+    padding: 15px;
+  }
+  .app-center-grid {
+    gap: 16px;
+  }
+  .android-download {
+    padding: 22px 20px;
+    gap: 14px;
+  }
+  .app-download-emblem {
+    width: 42px;
+    height: 49px;
+  }
+  .app-download-emblem > .icon {
+    width: 27px;
+    height: 27px;
+  }
+  .android-download h2 {
+    font-size: 19px;
+  }
+  .android-download p {
+    font-size: 11px;
+  }
+  .android-download > .button {
+    width: 100%;
+    margin-top: 3px;
+  }
+  .install-method > summary {
+    font-size: 11px;
+  }
+  .install-method > p {
+    font-size: 11px;
+  }
+  .app-update-row {
+    align-items: flex-start;
+  }
+  .app-help-note {
+    font-size: 10px;
+  }
+}

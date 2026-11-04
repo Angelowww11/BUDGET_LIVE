@@ -1058,6 +1058,7 @@ main {
   background: var(--cover);
 }
 .settings-nav > button > .icon {
+  display: inline-flex;
   width: 23px;
   height: 23px;
 }

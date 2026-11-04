@@ -1,9 +1,15 @@
+import { isNativeApp } from "./platform.js";
+
 export const pwaState = {
   installed:
+    isNativeApp ||
     matchMedia("(display-mode: standalone)").matches ||
     Boolean(navigator.standalone),
-  offlineReady: false,
+  offlineReady: isNativeApp,
   needsUpdate: false,
+  canInstall: false,
+  updateChecking: false,
+  installError: "",
 };
 let installPrompt,
   registration,
@@ -11,14 +17,20 @@ let installPrompt,
 
 export function initPWA(callback) {
   onChange = callback;
+  if (isNativeApp) {
+    onChange(pwaState);
+    return;
+  }
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     installPrompt = event;
+    pwaState.canInstall = true;
     onChange(pwaState);
   });
   window.addEventListener("appinstalled", () => {
     pwaState.installed = true;
     installPrompt = null;
+    pwaState.canInstall = false;
     onChange(pwaState);
   });
   if ("serviceWorker" in navigator && import.meta.env.PROD) {
@@ -46,24 +58,55 @@ export function initPWA(callback) {
         });
         navigator.serviceWorker.ready.then(() => {
           pwaState.offlineReady = true;
+          pwaState.installError = "";
           onChange(pwaState);
         });
         reg.update().catch(() => {});
       })
-      .catch(() => {});
+      .catch(() => {
+        pwaState.installError =
+          "Offline files could not be prepared. Reconnect and try again.";
+        onChange(pwaState);
+      });
   }
+  window.addEventListener("online", () => checkForUpdate().catch(() => {}));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && navigator.onLine)
+      registration?.update().catch(() => {});
+  });
 }
 
 export async function installApp() {
   if (!installPrompt) return false;
   const event = installPrompt;
   installPrompt = null;
+  pwaState.canInstall = false;
   await event.prompt();
-  await event.userChoice;
-  return true;
+  const result = await event.userChoice;
+  if (result.outcome === "accepted") pwaState.installed = true;
+  onChange(pwaState);
+  return result.outcome === "accepted";
+}
+
+export async function checkForUpdate() {
+  if (!navigator.onLine)
+    throw new Error("Connect to the internet to check for updates.");
+  if (!registration)
+    throw new Error("Open the installed app online once to prepare updates.");
+  pwaState.updateChecking = true;
+  onChange(pwaState);
+  try {
+    await registration.update();
+    if (registration.waiting) pwaState.needsUpdate = true;
+    return pwaState.needsUpdate;
+  } finally {
+    pwaState.updateChecking = false;
+    onChange(pwaState);
+  }
 }
 
 export function updateApp() {
+  if (document.querySelector("dialog[open]")) return false;
   if (registration?.waiting) {
     let reloading = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -74,4 +117,5 @@ export function updateApp() {
     });
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
   } else location.reload();
+  return true;
 }

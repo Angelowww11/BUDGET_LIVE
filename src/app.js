@@ -6,6 +6,7 @@ import "@fontsource/instrument-serif/latin.css";
 import "@fontsource/instrument-serif/latin-italic.css";
 import "./app.css";
 import "./planner.css";
+import "./app-shell.css";
 import { calculateAmount } from "./calculator.js";
 import {
   budgetSummary,
@@ -64,7 +65,20 @@ import {
   transactionList,
 } from "./views.js";
 import { demoState } from "./demo.js";
-import { pwaState, initPWA, installApp, updateApp } from "./pwa.js";
+import {
+  pwaState,
+  initPWA,
+  installApp,
+  updateApp,
+  checkForUpdate,
+} from "./pwa.js";
+import {
+  isNativeApp,
+  initNative,
+  saveNativeFile,
+  updateNativeAppearance,
+  APP_VERSION,
+} from "./platform.js";
 import {
   accountTypes,
   accountBalances,
@@ -123,6 +137,7 @@ const uid = () => crypto.randomUUID();
 function render() {
   document.documentElement.dataset.theme = data.settings.theme || "green";
   document.documentElement.dataset.mode = colorMode(data.settings);
+  updateNativeAppearance(colorMode(data.settings));
   document.querySelector('meta[name="theme-color"]').content = getComputedStyle(
     document.documentElement,
   )
@@ -139,7 +154,7 @@ function render() {
     stats: insightsView,
     settings: settingsView,
   }[ctx.view];
-  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="M.Y.M.P. overview">${logo}<span>M.Y.M.P.<small>PERSONAL FINANCE</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>Take M.Y.M.P. with you</strong><small>Install on your phone</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>M.Y.M.P.</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}" title="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}">${icon(colorMode(data.settings) === "dark" ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>M.Y.M.P. · Personal finance</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
+  app.innerHTML = `<a class="skip-link" href="#main-content">Skip to content</a><div class="app-shell"><aside class="sidebar" aria-label="Navigation and app tools"><button class="brand" data-action="navigate" data-view="home" aria-label="M.Y.M.P. overview">${logo}<span>M.Y.M.P.<small>PERSONAL FINANCE</small></span></button><p class="sidebar-label">YOUR PERSONAL SPACE</p><nav aria-label="Main navigation">${navItems.map(([value, label, glyph], index) => `<button data-action="navigate" data-view="${value}" class="nav-item ${ctx.view === value ? "active" : ""}" ${ctx.view === value ? 'aria-current="page"' : ""}>${icon(glyph)}<span>${label}</span>${ctx.view === value ? "<i></i>" : ""}</button>`).join("")}</nav>${button("New transaction", "add-entry", "plus", "button primary sidebar-add")}<div class="sidebar-bottom"><button class="install-card" data-action="view-install">${icon("device-mobile")}<span><strong>${isNativeApp ? "App center" : "Take M.Y.M.P. with you"}</strong><small>${isNativeApp ? `Version ${APP_VERSION}` : "Install on your phone"}</small></span>${icon("arrow-right")}</button><div class="sidebar-privacy">${icon("shield-check")}<span>Your records stay<br><strong>on this device.</strong></span></div></div></aside><div class="workspace"><header class="topbar"><button class="brand mobile-brand" data-action="navigate" data-view="home">${logo}<span>M.Y.M.P.</span></button><div class="breadcrumb"><span>My workspace</span>${icon("caret-right")}<strong>${navItems.find(([id]) => id === ctx.view)[1]}</strong></div><div class="topbar-actions"><span class="connection"><i class="${navigator.onLine ? "" : "offline"}"></i>${navigator.onLine ? "Saved on this device" : "Offline · still saving"}</span>${button(ctx.installed ? "Installed" : "Install app", "install", ctx.installed ? "check-circle" : "download-simple", "button small outline top-install", ctx.installed ? "disabled" : "")}<button class="icon-button theme-toggle" data-action="toggle-dark" aria-label="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}" title="${colorMode(data.settings) === "dark" ? "Switch to light mode" : "Switch to dark mode"}">${icon(colorMode(data.settings) === "dark" ? "sun" : "moon")}</button></div></header>${ctx.demo ? `<div class="demo-banner" role="region" aria-label="Sample preview">${icon("sparkle")}<span><strong>Sample preview</strong> · These records are examples. Your own data is untouched.</span>${button("Exit preview", "exit-demo", "x", "text-button")}</div>` : ""}<main id="main-content" tabindex="-1">${view({ ...ctx, data })}</main><footer class="app-footer"><span>M.Y.M.P. · Version ${APP_VERSION}</span><span>${icon("lock-key")}Private by design.</span></footer></div><button class="mobile-add" data-action="add-entry" aria-label="Add transaction">${icon("plus")}</button></div><div id="toast-region" class="toast-region" aria-live="polite"></div>${ctx.needsUpdate ? `<div class="update-notice" role="status">${icon("sparkle")}<span>A fresh version is ready.</span>${button("Update now", "update-app", "", "text-button")}</div>` : ""}`;
 }
 
 function renderRecovery() {
@@ -214,8 +229,14 @@ function modal(
 }
 
 function formSubmit(dialog, handler) {
+  let submitting = false;
   dialog.querySelector("form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (submitting) return;
+    submitting = true;
+    const submit = dialog.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    e.target.setAttribute("aria-busy", "true");
     const error = dialog.querySelector(".form-error");
     error.textContent = "";
     try {
@@ -224,6 +245,10 @@ function formSubmit(dialog, handler) {
       error.textContent =
         err.message || "Something went wrong. Please try again.";
       error.scrollIntoView({ block: "nearest" });
+    } finally {
+      submitting = false;
+      if (submit) submit.disabled = false;
+      e.target.removeAttribute("aria-busy");
     }
   });
 }
@@ -1124,27 +1149,41 @@ function monthlyBillDialog(bill = {}) {
   });
 }
 
-function download(name, content, type = "application/json") {
+async function download(name, content, type = "application/json") {
+  if (isNativeApp) return saveNativeFile(name, content);
   const url = URL.createObjectURL(new Blob([content], { type }));
   const link = document.createElement("a");
   link.href = url;
   link.download = name;
+  document.body.append(link);
   link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function restoreDialog(next) {
+  const current = ctx.demo ? demoOriginal : data;
+  const needsBackup =
+    !storageProblem &&
+    (current.transactions.length ||
+      current.transfers.length ||
+      current.bills.length ||
+      current.goals.length ||
+      Number(current.settings.budget) > 0 ||
+      current.accounts.some((a) => Number(a.openingBalance) !== 0));
   const d = modal(
     "Bring your records back.",
-    `<div class="restore-summary">${icon("shield-check")}<strong>${next.transactions.length} transactions</strong><span>${next.goals.length} savings goals · ${next.templates.length} shortcuts</span></div><p>This will replace the records on this device. A copy of your current records will download first.</p>`,
+    `<div class="restore-summary">${icon("shield-check")}<strong>${next.transactions.length} transactions</strong><span>${next.goals.length} savings goals · ${next.templates.length} shortcuts</span></div><p>This will replace the records on this device. ${needsBackup ? "A copy of your current records will be exported first." : "Your selected backup will fill this app with your saved records."}</p>`,
     {
       subtitle: "RESTORE BACKUP",
-      submitLabel: "Back up current data & restore",
+      submitLabel: needsBackup
+        ? "Save current data & restore"
+        : "Restore backup",
     },
   );
-  formSubmit(d, () => {
-    if (!storageProblem)
-      download(
+  formSubmit(d, async () => {
+    if (needsBackup)
+      await download(
         `mymp-before-restore-${dayKey(new Date())}.backup.json`,
         backup(ctx.demo ? demoOriginal : data),
       );
@@ -1162,18 +1201,18 @@ function restoreDialog(next) {
 function resetDialog() {
   const d = modal(
     "Reset all your data?",
-    `<p>This sets your plan and every account balance to zero and removes transactions, bills, goals, and preferences from this device. A backup will download first.</p><label>Type RESET to confirm<input name="confirmation" autocomplete="off" required pattern="RESET" placeholder="RESET"></label><label class="checkbox"><input type="checkbox" name="understood" required> I understand this clears all my saved data on this device.</label>`,
+    `<p>This sets your plan and every account balance to zero and removes transactions, bills, goals, and preferences from this device. A backup will be exported first.</p><label>Type RESET to confirm<input name="confirmation" autocomplete="off" required pattern="RESET" placeholder="RESET"></label><label class="checkbox"><input type="checkbox" name="understood" required> I understand this clears all my saved data on this device.</label>`,
     {
       subtitle: "DOUBLE CHECK",
-      submitLabel: "Download backup & reset everything",
+      submitLabel: "Save backup & reset everything",
     },
   );
-  formSubmit(d, (f) => {
+  formSubmit(d, async (f) => {
     if (f.get("confirmation") !== "RESET" || !f.has("understood"))
       throw new Error("Type RESET and check the box to continue.");
     if (ctx.demo)
       throw new Error("Leave the sample before resetting your data.");
-    download(
+    await download(
       `mymp-before-reset-${dayKey(new Date())}.backup.json`,
       backup(data),
     );
@@ -1614,7 +1653,7 @@ app.addEventListener("click", async (event) => {
         render();
         break;
       case "export-backup":
-        download(
+        await download(
           `mymp-${ctx.demo ? "sample-" : ""}${dayKey(new Date())}.backup.json`,
           backup(data),
         );
@@ -1629,7 +1668,11 @@ app.addEventListener("click", async (event) => {
             );
           } catch {}
         }
-        notify("Backup downloaded. Keep the file somewhere private.");
+        notify(
+          isNativeApp
+            ? "Backup exported. Keep the file somewhere private."
+            : "Backup downloaded. Keep the file somewhere private.",
+        );
         break;
       case "export-csv": {
         const rows = [
@@ -1668,7 +1711,7 @@ app.addEventListener("click", async (event) => {
               .join(","),
           )
           .join("\r\n");
-        download(
+        await download(
           `mymp-${dayKey(new Date())}.csv`,
           "\uFEFF" + csv,
           "text/csv;charset=utf-8",
@@ -1683,7 +1726,7 @@ app.addEventListener("click", async (event) => {
         resetDialog();
         break;
       case "download-raw":
-        download(
+        await download(
           "mymp-saved-records.json",
           localStorage.getItem(STORAGE_KEY) || "{}",
         );
@@ -1698,6 +1741,12 @@ app.addEventListener("click", async (event) => {
         break;
       }
       case "persist-storage": {
+        if (isNativeApp) {
+          notify(
+            "Android keeps records in this app’s private storage. Keep a backup before uninstalling.",
+          );
+          break;
+        }
         const granted = await navigator.storage?.persist?.();
         notify(
           granted
@@ -1714,7 +1763,14 @@ app.addEventListener("click", async (event) => {
         }
         break;
       case "update-app":
-        updateApp();
+        if (!updateApp()) notify("Finish or close your entry before updating.");
+        break;
+      case "check-update":
+        notify(
+          (await checkForUpdate())
+            ? "An update is ready. Tap Update now."
+            : "Update check finished. A new version will appear here when ready.",
+        );
         break;
       case "undo":
         if (undoState) {
@@ -1814,11 +1870,32 @@ initPWA((state) => {
   Object.assign(ctx, state);
   render();
 });
-if (
-  new URLSearchParams(location.search).get("action") === "add" &&
-  !storageProblem
-)
-  entryDialog();
+initNative({
+  back: () => {
+    const dialog = document.querySelector("dialog[open]");
+    if (dialog) {
+      dialog.close();
+      return true;
+    }
+    if (ctx.view !== "home") {
+      navigate("home");
+      return true;
+    }
+    return false;
+  },
+  resume: () => {
+    if (!document.querySelector("dialog[open]")) render();
+  },
+}).catch(() => notify("Reopen the app to finish loading device controls."));
+if (!storageProblem) {
+  const action = new URLSearchParams(location.search).get("action");
+  if (action === "add" || action === "expense") entryDialog();
+  else if (action === "income") entryDialog({ type: "income" });
+  else if (action === "accounts") {
+    ctx.settingsTab = "accounts";
+    navigate("settings");
+  }
+}
 
 document.addEventListener("change", (event) => {
   if (event.target.matches('select[name="cycle"]'))

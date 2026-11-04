@@ -1,6 +1,6 @@
 {
   "name": "daylight-budget",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,13 +8,23 @@
     "build": "vite build && node scripts/build-pwa.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "icons": "node scripts/generate-icons.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "build:native": "vite build --base / --outDir dist-native",
+    "android:sync": "npm run build:native && cap sync android && node scripts/prepare-android.mjs",
+    "android:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "sharp": "^0.35.5",
     "vite": "^7.1.0"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
     "@fontsource-variable/dm-sans": "^5.3.0",
     "@fontsource-variable/instrument-sans": "^5.3.0",
     "@fontsource-variable/manrope": "^5.3.0",

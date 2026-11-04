@@ -33,15 +33,57 @@
   ],
   "shortcuts": [
     {
-      "name": "Add transaction",
-      "short_name": "Add entry",
-      "url": "./?action=add",
+      "name": "Record an expense",
+      "short_name": "Expense",
+      "url": "./?action=expense",
       "icons": [
         {
           "src": "icons/icon-192.png",
           "sizes": "192x192"
         }
       ]
+    },
+    {
+      "name": "Record income",
+      "short_name": "Income",
+      "url": "./?action=income",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "View account balances",
+      "short_name": "Accounts",
+      "url": "./?action=accounts",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "screenshots": [
+    {
+      "src": "previews/mobile.webp",
+      "sizes": "390x844",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "M.Y.M.P. money planner on a phone, with sample data"
+    },
+    {
+      "src": "previews/desktop.webp",
+      "sizes": "1440x1000",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "M.Y.M.P. desktop money planner with sample data"
     }
   ]
 }

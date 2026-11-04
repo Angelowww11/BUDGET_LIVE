@@ -4,3 +4,14 @@ dist/
 *.local
 *.backup.json
 *.csv
+dist-native/
+releases/
+android/.gradle/
+android/local.properties
+android/**/build/
+android/**/capacitor.config.json
+android/**/capacitor.plugins.json
+android/app/src/main/assets/public/
+*.keystore
+*.jks
+signing*.json
