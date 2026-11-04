@@ -2,13 +2,13 @@ package com.angelowww11.mymp;
 
 import com.getcapacitor.BridgeActivity;
 import android.os.Bundle;
-import androidx.activity.EdgeToEdge;
+import androidx.core.view.WindowCompat;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(WindowAppearancePlugin.class);
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
     }
 }
