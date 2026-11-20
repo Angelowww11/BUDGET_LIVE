@@ -1,0 +1,558 @@
+/* Clear financial workspace: neutral canvas, purposeful color, aligned figures. */
+:root {
+  --ui: "DM Sans Variable", sans-serif;
+  --display: "Manrope Variable", sans-serif;
+  --radius: 16px;
+}
+:root:root[data-mode="light"] {
+  --page: #f3f5f8;
+  --surface: #fff;
+  --surface-soft: #f7f8fa;
+  --ink: #202a38;
+  --muted: #738092;
+  --line: #e5e9ef;
+  --shadow: 0 4px 24px #25334b05;
+}
+:root[data-theme="green"][data-mode="light"] {
+  --accent: #28796b;
+  --accent-hover: #206355;
+  --tint: #eaf4ef;
+}
+body {
+  font-family: var(--ui);
+}
+h1,
+h2,
+h3,
+.brand > span {
+  font-family: var(--display);
+}
+main {
+  max-width: 1540px;
+  padding: 36px 42px 54px;
+}
+.page-heading h1,
+.planner-heading h1 {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -1.3px;
+}
+.planner-heading .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+.planner-edition {
+  font-family: var(--ui);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.6;
+  border: 0;
+  padding: 0;
+}
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  color: var(--ink);
+  padding: 32px 18px 20px;
+}
+.sidebar .brand,
+.sidebar .brand > span {
+  color: var(--ink);
+}
+.sidebar .brand {
+  padding-left: 12px;
+}
+.sidebar .brand small,
+.sidebar .sidebar-label {
+  color: var(--muted);
+}
+.sidebar .brand > span {
+  font-size: 24px;
+  letter-spacing: -1px;
+}
+.sidebar .brand-symbol {
+  color: var(--accent);
+}
+.sidebar .nav-item {
+  color: var(--muted);
+  padding: 13px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  gap: 13px;
+}
+.sidebar .nav-item:hover {
+  background: var(--surface-soft);
+}
+.sidebar .nav-item.active {
+  color: var(--accent);
+  background: var(--tint);
+  font-weight: 700;
+}
+.sidebar .nav-item.active i {
+  display: none;
+}
+.sidebar .button.sidebar-add {
+  color: var(--on-accent, #fff);
+  background: var(--accent);
+  border-radius: 10px;
+  min-height: 46px;
+}
+.sidebar .install-card {
+  color: var(--ink);
+  background: var(--surface-soft);
+  border-color: var(--line);
+  border-radius: 12px;
+}
+.sidebar .install-card small,
+.sidebar .install-card .icon,
+.sidebar .sidebar-privacy,
+.sidebar .sidebar-privacy > .icon {
+  color: var(--muted);
+}
+.topbar {
+  background: var(--surface);
+  height: 72px;
+  padding-inline: 42px;
+}
+.brand > span {
+  letter-spacing: -0.8px;
+}
+.button {
+  border-radius: 9px;
+  min-height: 42px;
+  font-size: 12px;
+}
+.panel,
+.daily-pocket {
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+}
+.panel-heading h2,
+.wallet-heading h2 {
+  font-family: var(--display);
+  font-weight: 750;
+  letter-spacing: -0.6px;
+  font-size: 18px;
+}
+.wallet-heading h2 em {
+  font-family: inherit;
+  font-style: normal;
+  font-size: inherit;
+}
+.panel-heading p {
+  font-size: 12px;
+}
+.planner-board {
+  grid-template-columns: 1.25fr 1fr;
+  grid-template-areas: "cover pocket" "flow flow";
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.money-cover {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+  padding: 26px 28px 0;
+}
+.money-cover::before,
+.money-cover::after,
+.daily-pocket::after {
+  display: none;
+}
+.cover-kicker {
+  color: var(--muted);
+  letter-spacing: 0.7px;
+  font-size: 10px;
+  font-weight: 650;
+}
+.cover-heading .text-button {
+  color: var(--muted);
+}
+.cover-amount {
+  font-family: var(--display);
+  font-size: clamp(36px, 3.8vw, 58px);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -2.4px;
+  margin-top: 22px;
+}
+.cover-description {
+  color: var(--muted);
+  margin-top: 10px;
+  font-size: 12px;
+}
+.cover-period {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 24px 0 20px;
+}
+.cover-period > span:last-child {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+.cover-actions,
+.cover-setup {
+  margin-bottom: 25px;
+}
+.money-cover .cover-button {
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  padding: 11px 20px;
+  min-height: 42px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+.money-cover .cover-button:hover {
+  background: var(--accent-hover);
+}
+.money-cover .cover-button.secondary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.cover-setup > .text-button {
+  color: var(--accent);
+}
+.cover-account-total {
+  background: var(--surface-soft);
+  color: var(--ink);
+  border-top-color: var(--line);
+  padding-block: 16px;
+}
+.cover-account-total > span:not(.icon) {
+  color: var(--muted);
+}
+.daily-pocket {
+  padding: 25px 28px;
+  background: var(--tint);
+  border-color: color-mix(in srgb, var(--accent) 15%, var(--line));
+  display: flex;
+  flex-direction: column;
+}
+.pocket-top {
+  margin-bottom: 15px;
+  align-items: center;
+}
+.pocket-tab {
+  background: transparent;
+  color: var(--accent);
+  transform: none;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.8px;
+}
+.calendar-stamp {
+  background: var(--surface);
+  border: 0;
+  padding: 6px 9px;
+}
+.daily-pocket h2 {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pocket-amount {
+  font-family: var(--display);
+  font-weight: 650;
+  font-size: 48px;
+  letter-spacing: -2px;
+  margin-top: 6px;
+}
+.pocket-amount > span {
+  font-family: var(--ui);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.pocket-caption {
+  font-size: 11px;
+  margin-top: 10px;
+}
+.pocket-equation {
+  border: 0;
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 16px 0;
+  font-size: 11px;
+}
+.pocket-today {
+  margin-top: auto;
+  padding-top: 4px;
+  padding-bottom: 12px;
+  border: 0;
+}
+.pocket-today strong {
+  font-family: var(--ui);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.pocket-today span {
+  font-size: 10px;
+}
+.pocket-foot {
+  font-size: 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.planner-cashflow {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 24px;
+}
+.cashflow-label > span {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 750;
+}
+.cashflow-entries strong {
+  font-family: var(--ui);
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+}
+.wallet-section {
+  margin-bottom: 30px;
+}
+.wallet-heading {
+  margin-bottom: 16px;
+}
+.wallet-heading .eyebrow {
+  display: none;
+}
+.wallet-grid {
+  gap: 12px;
+}
+.wallet-divider {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 17px 18px;
+  box-shadow: none;
+  min-height: 160px;
+}
+.wallet-divider::before,
+.wallet-divider::after {
+  display: none;
+}
+.wallet-divider:hover {
+  border-color: var(--accent);
+}
+.wallet-divider-top {
+  margin-bottom: 14px;
+}
+.wallet-divider-top > .account-art {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--wallet-color) 10%, var(--surface));
+}
+.wallet-divider .wallet-name {
+  font-size: 12px;
+  font-weight: 550;
+}
+.wallet-divider > strong {
+  font-family: var(--ui);
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+  margin-top: 5px;
+}
+.wallet-divider > small {
+  font-size: 9px;
+  margin-top: 5px;
+  color: var(--muted);
+}
+.wallet-footer {
+  font-size: 10px;
+  margin-top: 12px;
+}
+.sheet {
+  border-radius: 18px;
+  box-shadow: 0 24px 100px #101c3833;
+}
+.sheet-header h2 {
+  font-family: var(--display);
+  font-weight: 750;
+}
+.calculator-keys .calc-key,
+.settings-nav > button {
+  border-radius: 9px;
+}
+.settings-nav > button.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+@media (min-width: 1100px) {
+  .wallet-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (min-width: 721px) and (max-width: 1100px) {
+  main {
+    padding: 28px;
+  }
+  .planner-board {
+    grid-template-columns: 1fr;
+    grid-template-areas: "cover" "pocket" "flow";
+  }
+}
+@media (max-width: 720px) {
+  main {
+    padding: 24px 18px 32px;
+  }
+  .topbar {
+    height: 68px;
+    padding-inline: 18px;
+    background: var(--surface);
+  }
+  .planner-heading {
+    margin-bottom: 22px;
+  }
+  .planner-heading h1,
+  .page-heading h1 {
+    font-size: 27px;
+    letter-spacing: -1px;
+  }
+  .planner-heading .eyebrow {
+    font-size: 10px;
+  }
+  .planner-edition {
+    display: none;
+  }
+  .planner-board {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "cover" "pocket" "flow";
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+  .money-cover {
+    padding: 22px 22px 0;
+  }
+  .cover-amount {
+    font-size: 44px;
+    letter-spacing: -2px;
+    margin-top: 18px;
+  }
+  .cover-description {
+    font-size: 10px;
+  }
+  .cover-period {
+    font-size: 10px;
+    margin: 20px 0 16px;
+  }
+  .cover-actions,
+  .cover-setup {
+    margin-bottom: 20px;
+  }
+  .cover-account-total {
+    width: calc(100% + 44px);
+    margin-left: -22px;
+    padding: 13px 22px;
+  }
+  .daily-pocket {
+    padding: 20px 22px;
+  }
+  .pocket-top {
+    margin-bottom: 12px;
+  }
+  .pocket-amount {
+    font-size: 42px;
+  }
+  .pocket-caption {
+    font-size: 10px;
+  }
+  .pocket-today {
+    padding-block: 8px 12px;
+  }
+  .pocket-equation {
+    margin: 12px 0;
+  }
+  .planner-cashflow {
+    padding: 16px 18px;
+  }
+  .cashflow-entries strong {
+    font-size: 18px;
+  }
+  .wallet-grid {
+    grid-auto-columns: 170px;
+    gap: 10px;
+  }
+  .wallet-divider {
+    min-height: 153px;
+    padding: 15px;
+  }
+  .wallet-footer {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .wallet-footer > span {
+    max-width: 65%;
+    line-height: 1.6;
+  }
+  .sidebar {
+    padding: 0 8px env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-right: 0;
+  }
+  .sidebar .nav-item {
+    padding: 8px 2px;
+    border-radius: 0;
+    font-size: 9px;
+    gap: 4px;
+  }
+  .sidebar .nav-item.active {
+    background: transparent;
+  }
+  .sidebar .nav-item.active::after {
+    width: 22px;
+    bottom: 0;
+  }
+  .sidebar .nav-item .icon {
+    width: 21px;
+    height: 21px;
+  }
+  .mobile-add {
+    border-radius: 11px;
+    background: var(--accent);
+    color: var(--on-accent, #fff);
+  }
+  .panel {
+    border-radius: 14px;
+  }
+  .panel-heading h2,
+  .wallet-heading h2 {
+    font-size: 17px;
+  }
+  .settings-nav > button {
+    min-height: 66px;
+  }
+}
+.money-cover {
+  display: flex;
+  flex-direction: column;
+}
+.cover-account-total {
+  margin-top: auto;
+}
+@media (min-width: 961px) {
+  .planner-cashflow {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    align-items: center;
+  }
+  .cashflow-entries {
+    width: 100%;
+  }
+}

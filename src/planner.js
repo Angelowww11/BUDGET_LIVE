@@ -14,7 +14,7 @@ export function plannerOverview(data, s, accounts, flow, now, cycleName) {
     ? `Until ${next.toLocaleDateString("en", { month: "short", day: "numeric" })}`
     : now.toLocaleDateString("en", { month: "long", year: "numeric" });
   const fixed = data.settings.rollover === false;
-  return `<div class="page-heading planner-heading"><div><p class="eyebrow">${now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</p><h1>My money <em>planner.</em></h1></div><span class="planner-edition">A little intention.<br>A clearer everyday.</span></div>
+  return `<div class="page-heading planner-heading"><div><p class="eyebrow">${now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" })}</p><h1>Your money, at a glance.</h1></div><span class="planner-edition">Your daily decisions.<br>One clear picture.</span></div>
   <div class="planner-board">
     <section class="money-cover" aria-label="Spending balance">
       <div class="cover-heading"><span class="cover-kicker">YOUR SPENDING BALANCE</span>${button("Edit plan", "budget-dialog", "pencil-simple", "text-button")}</div>
@@ -25,7 +25,7 @@ export function plannerOverview(data, s, accounts, flow, now, cycleName) {
       <button class="cover-account-total" data-action="view-accounts"><span>${icon("wallet")}All accounts</span><strong>${money(accounts.total, c)}</strong>${icon("caret-right")}</button>
     </section>
     <section class="daily-pocket" aria-label="Your daily allowance">
-      <div class="pocket-top"><span class="pocket-tab">THE DAILY POCKET</span><div class="calendar-stamp"><strong>${now.getDate()}</strong><span>${now.toLocaleDateString("en", { month: "short" })}</span></div></div>
+      <div class="pocket-top"><span class="pocket-tab">DAILY ALLOWANCE</span><div class="calendar-stamp"><strong>${now.getDate()}</strong><span>${now.toLocaleDateString("en", { month: "short" })}</span></div></div>
       <h2>Your daily allowance</h2><div class="pocket-amount">${money(s.safePerDay, c)}<span>/ day</span></div>
       <p class="pocket-caption">${fixed ? "Within your fixed cap and the funds remaining." : "Your remaining funds, shared across the days ahead."}</p>
       <div class="pocket-equation" aria-label="Remaining funds divided by remaining days"><span>${money(s.dailyPool, c)}</span><i>÷</i><span>${s.remainingDays} days</span><i>=</i><strong>${s.active && s.remainingDays ? money(s.dailyPool / s.remainingDays, c) : money(0, c)}</strong></div>

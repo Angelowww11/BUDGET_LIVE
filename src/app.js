@@ -7,6 +7,7 @@ import "@fontsource/instrument-serif/latin-italic.css";
 import "./app.css";
 import "./planner.css";
 import "./app-shell.css";
+import "./workspace-design.css";
 import { calculateAmount } from "./calculator.js";
 import {
   budgetSummary,
